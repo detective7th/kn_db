@@ -1,0 +1,20 @@
+#! /usr/bin/python3
+# -*- coding:utf-8 -*-
+
+import os
+import sys
+
+if 'SCons.Script' == __name__:
+    name = "db_core"
+
+    Import(name + '_version')
+    Import('env', 'install_dir', 'AddProjectSource')
+
+    env_core = env.Clone()
+    env_core.AppendUnique(CCFLAGS = " -shared")
+
+    libs=['m']
+    db_core = env_core.SharedLibrary(name, source = AddProjectSource(), tools = ['g++'], LIBS=libs
+                                     , SONAME = db_core_version.SoName()
+                                     , SHLIBVERSION = db_core_version.VersionStr())
+    Return(name)

@@ -15,6 +15,7 @@ if 'SCons.Script' == __name__:
     src = AddProjectSource()
 
     env_service = env.Clone()
+    env_service.AppendUnique(CCFLAGS = " -mavx")
     env_service.AppendUnique(CPPDEFINES={'VERSION' : '\\"%s\\"' % db_service_version.VersionStr()})
     db_service = env_service.Program(name, env_service.Object(src), LIBS=libs, tools=['g++'])
 

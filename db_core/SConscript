@@ -11,7 +11,7 @@ if 'SCons.Script' == __name__:
     Import('env', 'install_dir', 'AddProjectSource')
 
     env_core = env.Clone()
-    env_core.AppendUnique(CCFLAGS = " -shared")
+    env_core.AppendUnique(CCFLAGS = " -mavx -shared")
 
     libs=['m']
     db_core = env_core.SharedLibrary(name, source = AddProjectSource(), tools = ['g++'], LIBS=libs

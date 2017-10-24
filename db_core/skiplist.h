@@ -22,10 +22,6 @@
 
 #pragma once
 
-constexpr auto MAX_SKIP = 5;
-constexpr auto TOP_LANE_BLOCK = 16;
-constexpr auto SIMD_SEGMENTS = 8;
-
 #include <stdint.h>
 #include <memory>
 #include <limits>
@@ -40,6 +36,13 @@ namespace db
 namespace core
 {
 
+namespace
+{
+constexpr auto MAX_SKIP = 5;
+constexpr auto TOP_LANE_BLOCK = 16;
+constexpr auto SIMD_SEGMENTS = 8;
+}
+
 using KeyType = uint32_t;
 
 class DataNode
@@ -47,6 +50,7 @@ class DataNode
     friend class Lane;
     friend class SkipList;
     friend class ProxyNode;
+    friend class ProxyLane;
 
 public:
     DataNode() = default;
@@ -71,12 +75,20 @@ public:
 
     auto data_len() { return data_len_; }
     auto data() { return data_; }
+    auto next() { return next_; }
+    auto key() { return key_; }
 
 protected:
     void* data_ {nullptr};
     size_t data_len_{0};
-    uint32_t key_ {0};
-    struct std::shared_ptr<DataNode> next_ {nullptr};
+    KeyType key_ {0};
+    std::shared_ptr<DataNode> next_ {nullptr};
+};
+
+struct DataNodes
+{
+    std::shared_ptr<DataNode> start_ {nullptr};
+    std::shared_ptr<DataNode> end_ {nullptr};
 };
 
 class ProxyNode
@@ -137,6 +149,39 @@ public:
         return nullptr;
     }
 
+    std::shared_ptr<DataNode> SearchLt(KeyType key)
+    {
+        //std::shared_ptr<DataNode> ret = nodes_[skip_ - 1];
+        for (uint8_t i = 0; i != skip_; ++i)
+        {
+            if (nodes_[i])
+            {
+                if (key <= nodes_[i]->key_)
+                {
+                    if (i + 1 != skip_) return nodes_[i + 1];
+                    return nodes_[i];
+                }
+            }
+        }
+        return nullptr;
+    }
+
+    std::shared_ptr<DataNode> SearchGt(KeyType key)
+    {
+        //std::shared_ptr<DataNode> ret = nodes_[skip_ - 1];
+        for (int16_t i = skip_ - 1; 0 <= i; --i)
+        {
+            if (key >= nodes_[i]->key_) return nodes_[i];
+        }
+        return nullptr;
+    }
+
+    std::shared_ptr<DataNode> Get(uint8_t pos)
+    {
+        if (pos < skip_) return nodes_[pos];
+        return nullptr;
+    }
+
 protected:
     //std::unique_ptr<KeyType[]> keys_ {nullptr};
     uint8_t skip_{0};
@@ -186,6 +231,33 @@ public:
     auto Search(uint32_t pos, KeyType key)
     {
         return nodes_[pos]->Search(key);
+    }
+
+    std::shared_ptr<DataNode> SearchLt(uint32_t pos, KeyType key)
+    {
+        auto ret = nodes_[pos]->SearchLt(key);
+        if (ret)
+        {
+            if (ret->key() == key)
+            {
+                if (pos + 1 < slot_num_)
+                {
+                    ret = nodes_[pos + 1]->Get(0);
+                }
+                else return nullptr;
+            }
+        }
+        return ret;
+    }
+
+    std::shared_ptr<DataNode> SearchGt(uint32_t pos, KeyType key)
+    {
+        auto ret = nodes_[pos]->SearchGt(key);
+        if (!ret)
+        {
+            ret = nodes_[0]->Get(0);
+        }
+        return ret;
     }
 
 protected:
@@ -300,6 +372,18 @@ public:
         return nullptr;
     }
 
+    std::shared_ptr<DataNode> SearchProxyLaneLt(uint32_t pos, uint32_t key)
+    {
+        if (proxy_) return proxy_->SearchLt(pos, key);
+        return nullptr;
+    }
+
+    std::shared_ptr<DataNode> SearchProxyLaneGt(uint32_t pos, uint32_t key)
+    {
+        if (proxy_) return proxy_->SearchGt(pos, key);
+        return nullptr;
+    }
+
 protected:
     void InitProxyPointers()
     {
@@ -380,6 +464,50 @@ public:
     {
         //cur_pos is abs idx
         auto cur_pos = lanes_[max_level_ - 1].BinarySearch(key);
+        auto r_pos = GetProxyLaneRelPos(cur_pos, key);
+        return lanes_[0].SearchProxyLane(r_pos, key);
+    }
+
+    auto Find(KeyType start, KeyType end)
+    {
+        auto cur_pos = lanes_[max_level_ - 1].BinarySearch(start);
+        auto r_pos = GetProxyLaneRelPos(cur_pos, start);
+
+        DataNodes ret;
+        ret.start_ = lanes_[0].SearchProxyLaneGt(r_pos, start);
+
+        __m256 avx_sreg = _mm256_castsi256_ps(_mm256_set1_epi32(end));
+
+        //r_pos = cur_pos - lanes_[0].start_;
+        uint32_t elements_in_lane = lanes_[0].elements_ - SIMD_SEGMENTS;
+        while (r_pos < elements_in_lane)
+        {
+            __m256 avx_creg = _mm256_castsi256_ps(
+                _mm256_loadu_si256((__m256i const*) &(lanes_[0].keys_[r_pos])));
+            __m256 res = _mm256_cmp_ps(avx_sreg, avx_creg, 30);
+            uint32_t bitmask = _mm256_movemask_ps(res);
+            if (bitmask < 0xff) break;
+            cur_pos += SIMD_SEGMENTS; r_pos += SIMD_SEGMENTS;
+            //ret.count_ += (SIMD_SEGMENTS * skip_);
+        }
+
+        //if (r_pos > 0) --r_pos;
+
+        elements_in_lane += SIMD_SEGMENTS;
+        auto& lane = lanes_[0];
+        while (r_pos < elements_in_lane - 1 && end > lane.keys_[r_pos] &&  end >= lane.keys_[r_pos + 1])
+        {
+            ++r_pos;
+        }
+
+        ret.end_ = lanes_[0].SearchProxyLaneLt(r_pos, end);
+
+        return ret;
+    }
+
+protected:
+    uint32_t GetProxyLaneRelPos(uint32_t& cur_pos, KeyType key)
+    {
         uint32_t r_pos = 0;
         for (auto level = max_level_ - 1; 0 <= level; --level)
         {
@@ -392,11 +520,9 @@ public:
             if (0 == level) break;
             cur_pos = lanes_[level - 1].start_ + r_pos * lanes_[level - 1].skip_;
         }
-
-        return lanes_[0].SearchProxyLane(r_pos, key);
+        return r_pos;
     }
 
-protected:
     void ResizeLanes()
     {
         //auto new_size = lanes_[max_level_ - 1].slot_num_ + TOP_LANE_BLOCK;
@@ -432,28 +558,27 @@ public:
     {
         if (lanes_->InsertElement(new_node))
         {
+            tail_->next_ = new_node;
             tail_ = new_node;
             return true;
         }
         return false;
     }
 
-    auto Find(uint32_t key)
+    auto Find(KeyType key)
     {
         return lanes_->Find(key);
+    }
+
+    auto Find(KeyType start, KeyType end)
+    {
+        return lanes_->Find(start, end);
     }
 
 protected:
     std::shared_ptr<DataNode> head_{nullptr};
     std::shared_ptr<DataNode> tail_{nullptr};
     std::unique_ptr<Lanes> lanes_{nullptr};
-};
-
-struct RangeSearchResult
-{
-    DataNode* start_ {nullptr};
-    DataNode* end_ {nullptr};
-    uint32_t count_ {0};
 };
 
 } //core

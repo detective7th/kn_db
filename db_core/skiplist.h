@@ -491,16 +491,18 @@ public:
             //ret.count_ += (SIMD_SEGMENTS * skip_);
         }
 
-        //if (r_pos > 0) --r_pos;
-
-        elements_in_lane += SIMD_SEGMENTS;
-        auto& lane = lanes_[0];
-        while (r_pos < elements_in_lane - 1 && end > lane.keys_[r_pos] &&  end >= lane.keys_[r_pos + 1])
-        {
-            ++r_pos;
-        }
-
+        cur_pos = lanes_[max_level_ - 1].BinarySearch(end);
+        r_pos = GetProxyLaneRelPos(cur_pos, end);
         ret.end_ = lanes_[0].SearchProxyLaneLt(r_pos, end);
+
+        //elements_in_lane += SIMD_SEGMENTS;
+        //auto& lane = lanes_[0];
+        //while (r_pos < elements_in_lane - 1 && end > lane.keys_[r_pos] &&  end >= lane.keys_[r_pos + 1])
+        //{
+        //    ++r_pos;
+        //}
+
+        //ret.end_ = lanes_[0].SearchProxyLaneLt(r_pos, end);
 
         return ret;
     }

@@ -200,6 +200,14 @@ public:
         std::fill_n(nodes_.get(), slot_num, nullptr);
     }
 
+    void Resize(uint32_t slot_num)
+    {
+        auto old_slot_num = slot_num_;
+        slot_num_ = slot_num;
+        auto new_nodes = new std::unique_ptr<ProxyNode>[slot_num_]();
+        for (decltype(old_slot_num) i = 0; i != old_slot_num; ++i) new_nodes[i] = std::move(nodes_[i]);
+    }
+
     void Set(uint32_t pos, std::shared_ptr<DataNode>& data)
     {
         nodes_[pos].reset(new ProxyNode(data, skip_));
@@ -280,7 +288,7 @@ public:
             ,skip_(skip)
             ,keys_(new KeyType[slot_num_](), std::default_delete<KeyType[]>())
     {
-        InitProxyPointers();
+        if (0 == level_) proxy_ = std::make_unique<ProxyLane>(slot_num_, skip_);
         std::fill_n(keys_.get(), slot_num_, std::numeric_limits<KeyType>::max());
     }
 
@@ -292,10 +300,21 @@ public:
         start_ = start;
         level_ = level;
         skip_ = skip;
-        InitProxyPointers();
-        keys_ = std::unique_ptr<KeyType[]>(new KeyType[slot_num_]()
-                                           , std::default_delete<KeyType[]>());
+        if (0 == level_) proxy_ = std::make_unique<ProxyLane>(slot_num_, skip_);
+        keys_ = std::unique_ptr<KeyType[]>(new KeyType[slot_num_](), std::default_delete<KeyType[]>());
         std::fill_n(keys_.get(), slot_num_, std::numeric_limits<KeyType>::max());
+    }
+
+    void Resize(uint32_t slot_num, uint32_t start)
+    {
+        auto old_slot_num = slot_num_;
+        keys_ = nullptr;
+        slot_num_ = slot_num;
+        start_ = start;
+        if (proxy_) proxy_->Resize(slot_num_);
+        auto new_keys = std::unique_ptr<KeyType[]>(new KeyType[slot_num_], std::default_delete<KeyType[]>());
+        for (decltype(old_slot_num) i = 0; i != slot_num_; ++i) new_keys[i] = keys_[i] ;
+        keys_ = std::move(new_keys);
     }
 
     friend inline std::ostream& operator << (std::ostream& os, Lane& lane)
@@ -382,12 +401,6 @@ public:
     {
         if (proxy_) return proxy_->SearchGt(pos, key);
         return nullptr;
-    }
-
-protected:
-    void InitProxyPointers()
-    {
-        if (0 == level_) proxy_ = std::make_unique<ProxyLane>(slot_num_, skip_);
     }
 
 protected:
@@ -527,7 +540,19 @@ protected:
 
     void ResizeLanes()
     {
+        std::cout << "Resize" << std::endl;
         //auto new_size = lanes_[max_level_ - 1].slot_num_ + TOP_LANE_BLOCK;
+        total_slots_size_ = 0;
+        uint32_t new_size = lanes_[max_level_ - 1].slot_num_ + TOP_LANE_BLOCK;
+        total_slots_size_ += new_size;
+
+        lanes_[max_level_ - 1].Resize(total_slots_size_, 0);
+        for (int8_t level = max_level_ - 2; 0 <= level; --level)
+        {
+            auto& next_lane = lanes_[level + 1];
+            lanes_[level].Resize(next_lane.slot_num_ * skip_, next_lane.start_ + next_lane.slot_num_);
+            total_slots_size_ += lanes_[level].slot_num_;
+        }
     }
 
 protected:

@@ -204,8 +204,10 @@ public:
     {
         auto old_slot_num = slot_num_;
         slot_num_ = slot_num;
-        auto new_nodes = new std::unique_ptr<ProxyNode>[slot_num_]();
+        auto new_nodes = std::make_unique<std::unique_ptr<ProxyNode>[]>(slot_num_);
+        std::fill_n(new_nodes.get(), slot_num, nullptr);
         for (decltype(old_slot_num) i = 0; i != old_slot_num; ++i) new_nodes[i] = std::move(nodes_[i]);
+        nodes_ = std::move(new_nodes);
     }
 
     void Set(uint32_t pos, std::shared_ptr<DataNode>& data)
@@ -308,12 +310,12 @@ public:
     void Resize(uint32_t slot_num, uint32_t start)
     {
         auto old_slot_num = slot_num_;
-        keys_ = nullptr;
         slot_num_ = slot_num;
         start_ = start;
         if (proxy_) proxy_->Resize(slot_num_);
         auto new_keys = std::unique_ptr<KeyType[]>(new KeyType[slot_num_], std::default_delete<KeyType[]>());
-        for (decltype(old_slot_num) i = 0; i != slot_num_; ++i) new_keys[i] = keys_[i] ;
+        std::fill_n(new_keys.get(), slot_num_, std::numeric_limits<KeyType>::max());
+        for (decltype(old_slot_num) i = 0; i != old_slot_num; ++i) new_keys[i] = keys_[i] ;
         keys_ = std::move(new_keys);
     }
 
@@ -468,6 +470,7 @@ public:
         if (0 == (total_elements_ % (TOP_LANE_BLOCK * static_cast<uint32_t>(pow(skip_, max_level_)))))
         {
             ResizeLanes();
+            //std::cout << *this << std::endl;
         }
 
         return true;
@@ -540,7 +543,6 @@ protected:
 
     void ResizeLanes()
     {
-        std::cout << "Resize" << std::endl;
         //auto new_size = lanes_[max_level_ - 1].slot_num_ + TOP_LANE_BLOCK;
         total_slots_size_ = 0;
         uint32_t new_size = lanes_[max_level_ - 1].slot_num_ + TOP_LANE_BLOCK;

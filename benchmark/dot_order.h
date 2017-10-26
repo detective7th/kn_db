@@ -11,218 +11,185 @@
 #include <unordered_map>
 #include <memory>
 #include <iostream>
+#include <algorithm>
 #include "folly/FBString.h"
 #include "market_def.pb.h"
 namespace namedot 
 {
-    using namespace folly;
-    struct DotOrder
+using namespace folly;
+struct DotOrder
+{
+    double trade_vol_ {0};
+    double turnover_ {0};
+    uint64_t timestamp_ {0};
+    uint32_t sequence_ {0};
+    Direction direction_{Direction::UNKNOW};
+    double price_ {0};
+    uint64_t trade_time_{0};
+    OrderType order_type_{OrderType::OT_UNKNOWN};
+    int64_t order_no_{0};
+};
+std::shared_ptr<folly::MemoryMapping> file_mapping = nullptr;
+template<typename T>bool fun_vector_insert(const folly::StringPiece& file_data, T& con)
+{
+    int size = file_data.size()/sizeof(DotOrder);
+    if(size <=0 || (file_data.size() % sizeof(DotOrder) != 0 ))
     {
-        double trade_vol_ {0};
-        double turnover_ {0};
-        uint64_t timestamp_ {0};
-        uint32_t sequence_ {0};
-        md::hxzq::Direction direction_{md::hxzq::Direction::UNKNOW};
-        double price_ {0};
-        uint64_t trade_time_{0};
-        md::hxzq::OrderType order_type_{md::hxzq::OrderType::OT_UNKNOWN};
-        int64_t order_no_{0};
-    };
-    std::shared_ptr<folly::MemoryMapping> file_mapping = nullptr;
-    void rand_bench(int iters, const folly::StringPiece& file_data)
-    {
-        int size = file_data.size()/sizeof(DotOrder);
-        if(size <=0 || (file_data.size() % sizeof(DotOrder) != 0 ))
-        {
-            std::cout << "file content error;" <<std::endl;
-            return;
-        }
-        BenchmarkSuspender braces;
-        braces.dismissing([&] {
-            while (iters--) {
-              std::unordered_map<int64_t,DotOrder*> test;
-              for(int i = 0; i < size; i++)
-              {
-                //folly::StringPiece onepiece(file_data.subpiece(i*sizeof(DotOrder), sizeof(DotOrder)));
-                DotOrder* dot = (DotOrder*)(file_data.start() + i*sizeof(DotOrder));
-                test.emplace(dot->order_no_, dot);
-              }
-              doNotOptimizeAway(test);
-            }
-        });
+        std::cout << "file content error;" <<std::endl;
+        return false;
     }
-    void set_rand_bench(const std::string& path)
+    for(int i = 0; i < size; i++)
     {
-        folly::StringPiece file_data;
-        //std::shared_ptr<folly::MemoryMapping> file_mapping = nullptr;
+        DotOrder* dot = (DotOrder*)(file_data.start() + i*sizeof(DotOrder));
+        con.emplace_back(((dot->trade_time_/100000000) << 32)|(dot->order_no_));
+    }
+    return true;
+}
+template<typename T> bool fun_vector_search(const T& con, const int64_t& search_key)
+{
+    auto res = std::find(con.begin(), con.end(), search_key);
+    if(res != con.end())
+    {
+        //std::cout <<" found";
+    }
+}
+template<typename T>bool fun_map_insert(const folly::StringPiece& file_data, T& con)
+{
+    int size = file_data.size()/sizeof(DotOrder);
+    if(size <=0 || (file_data.size() % sizeof(DotOrder) != 0 ))
+    {
+        std::cout << "file content error;" <<std::endl;
+        return false;
+    }
+    for(int i = 0; i < size; i++)
+    {
+        DotOrder* dot = (DotOrder*)(file_data.start() + i*sizeof(DotOrder));
+        con.emplace(((dot->trade_time_/100000000) << 32)|(dot->order_no_), dot);
+    }
+    return true;
+}
+template<typename T> bool fun_map_search(const T& con, const int64_t& search_key)
+{
+    auto res = con.find(search_key);
+    if(res != con.end())
+    {
+        //std::cout <<" found";
+    }
+}
+
+void set_rand_bench_single(const std::string& path)
+{
+    folly::StringPiece file_data;
+    if(!file_mapping)
+    {
         file_mapping = std::make_shared<folly::MemoryMapping>(path.c_str());
-        if (file_mapping)
-        {
-            file_data = file_mapping->data();
-        }
-        else
-        {
-            std::cout << "Lock Settle Memory Map Failed" <<std::endl;
-            return;
-        }
-        addBenchmark(
-            __FILE__,
-            "rand_bench_order_insert",
-            [=](int iters) {
-              rand_bench(iters ,file_data);
-              return iters;
-            });
     }
-    void rand_search_bench(int iters,const std::unordered_map<int64_t,DotOrder*>& dicts , const std::vector<int64_t>& search_key)
+    if (file_mapping)
     {
-        if(dicts.empty())
-        {
-            std::cout << "dict is empty" << std::endl;
-        }
-        BenchmarkSuspender braces;
-        braces.dismissing([&] {
-            while (iters--) {
-                for(const auto& key : search_key)
-                {
-                  const auto res = dicts.find(key);
-                  //doNotOptimizeAway(test);   
-                }
-            }
+        file_data = file_mapping->data();
+    }
+    else
+    {
+        std::cout << "Lock Settle Memory Map Failed" <<std::endl;
+        return;
+    }
+    addBenchmark(
+        __FILE__,
+        "order_insert",
+        [=](int iters) {
+            rand_bench_com<std::vector<int64_t>>(iters ,file_data,fun_vector_insert<std::vector<int64_t>>);
+            return iters;
         });
-    }
-    void set_search_bench(const std::string& path)
-    {
-        folly::StringPiece file_data;
-        file_mapping = std::make_shared<folly::MemoryMapping>(path.c_str());
-        if (file_mapping)
-        {
-            file_data = file_mapping->data();
-        }
-        else
-        {
-            std::cout << "Lock Settle Memory Map Failed" <<std::endl;
-            return;
-        }
-        int size = file_data.size()/sizeof(DotOrder);
-        if(size <=0 || (file_data.size() % sizeof(DotOrder) != 0 ))
-        {
-            std::cout << "file content error;" <<std::endl;
-            return;
-        }
-        std::unordered_map<int64_t,DotOrder*> test;
-        for(int i = 0; i < size; i++)
-        {
-          //folly::StringPiece onepiece(file_data.subpiece(i*sizeof(DotOrder), sizeof(DotOrder)));
-          DotOrder* dot = (DotOrder*)(file_data.start() + i*sizeof(DotOrder));
-          test.emplace( dot->order_no_, dot);
-        }
-        std::cout << "size:" << size << std::endl;
-        std::vector<int64_t> search_key = rand_count();
-        addBenchmark(
-            __FILE__,
-            "rand_search_bench_order",
-            [=](int iters) {
-                rand_search_bench(iters ,test, search_key);
-              return iters;
-            });
-    }
-    //-----------------------single key test -----------------------
-    template<typename T> void rand_bench_single(int iters, const folly::StringPiece& file_data)
-    {
-        int size = file_data.size()/sizeof(DotOrder);
-        if(size <=0 || (file_data.size() % sizeof(DotOrder) != 0 ))
-        {
-            std::cout << "file content error;" <<std::endl;
-            return;
-        }
-        BenchmarkSuspender braces;
-        braces.dismissing([&] {
-            while (iters--) {
-              T test;
-              for(int i = 0; i < size; i++)
-              {
-                //folly::StringPiece onepiece(file_data.subpiece(i*sizeof(DotOrder), sizeof(DotOrder)));
-                DotOrder* dot = (DotOrder*)(file_data.start() + i*sizeof(DotOrder));
-                test.emplace_back(dot->order_no_);
-              }
-              doNotOptimizeAway(test);
-            }
+    addBenchmark(
+        __FILE__,
+        "order_list_insert",
+        [=](int iters) {
+            rand_bench_com<std::list<int64_t>>(iters ,file_data,fun_vector_insert<std::list<int64_t>>);
+            return iters;
         });
-    }
-    template<typename T> void set_rand_bench_single(const std::string& path)
-    {
-        folly::StringPiece file_data;
-        //std::shared_ptr<folly::MemoryMapping> file_mapping = nullptr;
-        file_mapping = std::make_shared<folly::MemoryMapping>(path.c_str());
-        if (file_mapping)
-        {
-            file_data = file_mapping->data();
-        }
-        else
-        {
-            std::cout << "Lock Settle Memory Map Failed" <<std::endl;
-            return;
-        }
-        addBenchmark(
-            __FILE__,
-            "rand_bench_order_insert_single",
-            [=](int iters) {
-                rand_bench_single<T>(iters ,file_data);
-              return iters;
-            });
-    }
-    template<typename T>void rand_search_bench_single(int iters,T& dicts , const std::vector<int64_t>& search_key)
-    {
-        if(dicts.empty())
-        {
-            std::cout << "dict is empty" << std::endl;
-        }
-        BenchmarkSuspender braces;
-        braces.dismissing([&] {
-            while (iters--) {
-                for(const auto& key : search_key)
-                {
-                  //const auto res = dicts.find(key);
-                  //doNotOptimizeAway(test);   
-                }
-            }
+    addBenchmark(
+        __FILE__,
+        "order_map_insert",
+        [=](int iters) {
+            rand_bench_com<std::map<int64_t, DotOrder*>>(iters ,file_data,fun_map_insert<std::map<int64_t, DotOrder*>>);
+            return iters;
         });
-    }
-    template<typename T> void set_search_bench_single(const std::string& path)
+    addBenchmark(
+        __FILE__,
+        "order_unordered_map_insert",
+        [=](int iters) {
+            rand_bench_com<std::unordered_map<int64_t, DotOrder*>>(iters ,file_data,fun_map_insert<std::unordered_map<int64_t, DotOrder*>>);
+            return iters;
+        });
+}
+void set_search_bench_single(const std::string& path)
+{
+    folly::StringPiece file_data;
+    if(!file_mapping)
     {
-        folly::StringPiece file_data;
         file_mapping = std::make_shared<folly::MemoryMapping>(path.c_str());
-        if (file_mapping)
-        {
-            file_data = file_mapping->data();
-        }
-        else
-        {
-            std::cout << "Lock Settle Memory Map Failed" <<std::endl;
-            return;
-        }
-        int size = file_data.size()/sizeof(DotOrder);
-        if(size <=0 || (file_data.size() % sizeof(DotOrder) != 0 ))
-        {
-            std::cout << "file content error;" <<std::endl;
-            return;
-        }
-        T test;
-        for(int i = 0; i < size; i++)
-        {
-          //folly::StringPiece onepiece(file_data.subpiece(i*sizeof(DotOrder), sizeof(DotOrder)));
-          DotOrder* dot = (DotOrder*)(file_data.start() + i*sizeof(DotOrder));
-          test.emplace_back( dot->order_no_, dot);
-        }
-        std::vector<int64_t> search_key = rand_count();
-        addBenchmark(
-            __FILE__,
-            "rand_search_bench_order_single",
-            [=](int iters) {
-                rand_search_bench_single<T>(iters ,test, search_key);
-              return iters;
-            });
     }
+    if (file_mapping)
+    {
+        file_data = file_mapping->data();
+    }
+    else
+    {
+        std::cout << "Lock Settle Memory Map Failed" <<std::endl;
+        return;
+    }
+    int size = file_data.size()/sizeof(DotOrder);
+    if(size <=0 || (file_data.size() % sizeof(DotOrder) != 0 ))
+    {
+        std::cout << "file content error;" <<std::endl;
+        return;
+    }
+    std::cout <<"file: "<<__FILE__<< "single size : " << size << std::endl;
+    std::vector<int64_t> test;
+    std::list<int64_t> testlist;
+    std::map<int64_t, DotOrder*> test_map;
+    std::unordered_map<int64_t, DotOrder*> test_hash_map;
+    uint64_t no = 0;
+    for(int i = 0; i < size; i++)
+    {
+        //folly::StringPiece onepiece(file_data.subpiece(i*sizeof(DotOrder), sizeof(DotOrder)));
+        DotOrder* dot = (DotOrder*)(file_data.start() + i*sizeof(DotOrder));
+        no = ((dot->trade_time_/100000000) << 32)|(dot->order_no_);
+        test.emplace_back(no);
+        testlist.emplace_back(no);
+        test_map.emplace(no, dot);
+        test_hash_map.emplace(no, dot);
+    }
+    std::vector<int64_t> search_key = rand_count();
+    addBenchmark(
+        __FILE__,
+        "order_vector_search",
+        [=](int iters) {
+            rand_search_bench_com<std::vector<int64_t>, int64_t>(iters ,test, search_key, fun_vector_search<std::vector<int64_t>>);
+            return iters;
+        });
+    addBenchmark(
+            __FILE__,
+            "order_list_search",
+            [=](int iters) {
+                rand_search_bench_com<std::list<int64_t>, int64_t>(iters ,testlist, search_key, fun_vector_search<std::list<int64_t>>);
+                return iters;
+            });    
+    addBenchmark(
+        __FILE__,
+        "order_map_search",
+        [=](int iters) {
+            rand_search_bench_com<std::map<int64_t, DotOrder*>, int64_t>(iters ,test_map, search_key, fun_map_search<std::map<int64_t, DotOrder*>>);
+            return iters;
+        });    
+    addBenchmark(
+        __FILE__,
+        "order_unordered_map_search",
+        [=](int iters) {
+            rand_search_bench_com<std::unordered_map<int64_t, DotOrder*>, int64_t>(iters ,test_hash_map, search_key, fun_map_search<std::unordered_map<int64_t, DotOrder*>>);
+            return iters;
+        });    
+    }   
 }// namespace tv
 
 #endif

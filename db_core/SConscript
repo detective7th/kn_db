@@ -13,7 +13,7 @@ if 'SCons.Script' == __name__:
     env_core = env.Clone()
     env_core.AppendUnique(CCFLAGS = " -mavx -shared")
 
-    libs=['m']
+    libs=['m', "folly"]
     db_core = env_core.SharedLibrary(name, source = AddProjectSource(), tools = ['g++'], LIBS=libs
                                      , SONAME = db_core_version.SoName()
                                      , SHLIBVERSION = db_core_version.VersionStr())

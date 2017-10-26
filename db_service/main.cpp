@@ -51,15 +51,18 @@ int main(int argc, char* argv[])
                     hash_func = [=](void* data, kn::db::core::Table* table){
                         auto o = (kn::db::service::Order*)data;
                         return kn::db::service::CombineHiLow<kn::db::core::KeyType, uint32_t>
-                        (static_cast<uint32_t>(o->trade_time_), static_cast<uint32_t>(o->order_no_));
+                        (static_cast<uint32_t>(o->trade_time_/1000000000)
+                         , static_cast<uint32_t>(o->order_no_));
                     };
                 }
                 else if ("transactions" == set_name)
                 {
                     hash_func = [=](void* data, kn::db::core::Table* table){
                         auto o = (kn::db::service::Transaction*)data;
+
                         return kn::db::service::CombineHiLow<kn::db::core::KeyType, uint32_t>
-                        (static_cast<uint32_t>(o->trade_time_), static_cast<uint32_t>(o->transaction_no_));
+                        (static_cast<uint32_t>(o->trade_time_/1000000000)
+                         , static_cast<uint32_t>(o->transaction_no_));
                     };
                 }
                 else continue;

@@ -67,8 +67,12 @@ public:
             data.advance(row_len_);
         }
     }
-
     folly::StringPiece name() { return {name_.begin(), name_.end()}; }
+
+    auto Find(KeyType key)
+    {
+        return skip_list_->Find(key);
+    }
 
 protected:
     folly::fbstring name_;

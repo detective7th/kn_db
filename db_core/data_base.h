@@ -54,6 +54,17 @@ public:
         return false;
     }
 
+    std::shared_ptr<DataNode> Find(folly::StringPiece set_name, folly::StringPiece table_name
+                                   , KeyType key)
+    {
+        auto it = sets_.find(set_name);
+        if (it != sets_.end())
+        {
+            return it->second->Find(table_name, key);
+        }
+        return nullptr;
+    }
+
 protected:
     folly::StringKeyedUnorderedMap<std::shared_ptr<Set>> sets_;
     folly::fbstring name_;

@@ -74,11 +74,10 @@ int main(int argc, char* argv[])
 
                 set_name = "";
             }
-            //Table table(*begin, begin->leaf(), [](void* data, uint32_t len){return 0;});
         }
-        //std::cout << begin->path().string();
     }
 
+    //base.Find("orders", "000001", );
     //kn::db::core::SkipList list(2, 2);
     //std::cout << list << std::endl;
     //void* data = malloc(32);

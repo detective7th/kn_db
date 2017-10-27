@@ -37,7 +37,7 @@ std::vector<int64_t> rand_count()
     for(int i = 0; i < kSearchCount; i ++)
     {
         
-        vec.emplace_back((rand()%30 + 20171001) << 32| (rand() % 10000000));
+        vec.emplace_back(((int64_t)rand()%30 + base) << 32| ((int64_t)rand() % 10000000));
     }
     return vec;
 }

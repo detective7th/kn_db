@@ -571,6 +571,10 @@ class SkipList
 {
 
 public:
+    SkipList()
+    {
+        SkipList(5,2);
+    }
     SkipList(uint8_t max_level, uint8_t skip)
             :head_(std::make_shared<DataNode>())
             ,lanes_(std::make_unique<Lanes>(max_level, skip))

@@ -65,6 +65,16 @@ public:
         return nullptr;
     }
 
+    DataNodes Find(folly::StringPiece set_name, folly::StringPiece table_name, KeyType start, KeyType end)
+    {
+        auto it = sets_.find(set_name);
+        if (it != sets_.end())
+        {
+            return it->second->Find(table_name, start, end);
+        }
+        return {nullptr, nullptr};
+    }
+
     std::shared_ptr<Set> GetSet(folly::StringPiece set_name)
     {
         return sets_.find(set_name)->second;

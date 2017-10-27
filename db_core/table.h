@@ -74,6 +74,11 @@ public:
         return skip_list_->Find(key);
     }
 
+    DataNodes Find(KeyType start, KeyType end)
+    {
+        return skip_list_->Find(start, end);
+    }
+
 protected:
     folly::fbstring name_;
     boost::filesystem::path path_;

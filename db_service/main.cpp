@@ -32,6 +32,7 @@ int main(int argc, char* argv[])
 
     folly::fbstring set_name;
     kn::db::core::DataBase base{"test"};
+    std::vector<uint64_t> orders_keys;
     for (boost::filesystem::recursive_directory_iterator it(data_path);
          it != boost::filesystem::recursive_directory_iterator(); ++it)
     {
@@ -51,9 +52,28 @@ int main(int argc, char* argv[])
                     hash_func = [=](void* data, kn::db::core::Table* table){
                         auto o = (kn::db::service::Order*)data;
                         return kn::db::service::CombineHiLow<kn::db::core::KeyType, uint32_t>
-                        (static_cast<uint32_t>(o->trade_time_/1000000000)
-                         , static_cast<uint32_t>(o->order_no_));
+                        (static_cast<uint32_t>(o->trade_time_/1000000000), static_cast<uint32_t>(o->order_no_));
                     };
+
+                    folly::MemoryMapping::Options o;
+                    o.setWritable(false);
+                    o.setGrow(false);
+                    o.setShared(true);
+                    auto file_mapping
+                            = std::make_unique<folly::MemoryMapping>(it->path().native().c_str(), 0, -1, o);
+                    folly::StringPiece data = file_mapping->data();
+                    auto row_len = *((uint32_t*)data.begin());
+                    data.advance(sizeof(uint32_t));
+                    auto row_num = data.size()/row_len;
+
+                    for (size_t i = 0; i != row_num; ++i)
+                    {
+                        kn::db::service::Order* o = (kn::db::service::Order*)data.begin();
+                        orders_keys.push_back(kn::db::service::CombineHiLow<kn::db::core::KeyType, uint32_t>
+                                              (static_cast<uint32_t>(o->trade_time_/1000000000)
+                                               , static_cast<uint32_t>(o->order_no_)));
+                        data.advance(row_len);
+                    }
                 }
                 else if ("transactions" == set_name)
                 {
@@ -65,6 +85,7 @@ int main(int argc, char* argv[])
                     };
                 }
                 else continue;
+
 
                 auto table = std::make_shared<kn::db::core::Table>(it->path()
                                                                    , it->path().leaf().string().c_str()
@@ -79,8 +100,15 @@ int main(int argc, char* argv[])
         }
     }
 
-    auto data_node = base.GetSet("orders")->GetTable("000002")
-                     ->Find(kn::db::service::CombineHiLow<kn::db::core::KeyType, uint32_t>(20010101, 123));
+    auto table = base.GetSet("orders")->GetTable("000002");
+    for (auto key : orders_keys)
+    {
+        auto data_node = table->Find(key);
+        assert(data_node);
+    }
 
+    auto nodes = table->Find(orders_keys[10], orders_keys[300]);
+    assert(nodes.start_);
+    assert(nodes.end_);
     return 0;
 }

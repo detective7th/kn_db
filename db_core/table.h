@@ -66,7 +66,6 @@ public:
             skip_list_->Insert(node);
             data.advance(row_len_);
         }
-        std::cout << *skip_list_;
     }
     folly::StringPiece name() { return {name_.begin(), name_.end()}; }
 

@@ -56,6 +56,11 @@ public:
         return nullptr;
     }
 
+    std::shared_ptr<Table> GetTable(folly::StringPiece table_name)
+    {
+        return tables_.find(table_name)->second;
+    }
+
 protected:
     folly::StringKeyedUnorderedMap<std::shared_ptr<Table>> tables_;
     folly::fbstring name_;

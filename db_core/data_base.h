@@ -65,6 +65,11 @@ public:
         return nullptr;
     }
 
+    std::shared_ptr<Set> GetSet(folly::StringPiece set_name)
+    {
+        return sets_.find(set_name)->second;
+    }
+
 protected:
     folly::StringKeyedUnorderedMap<std::shared_ptr<Set>> sets_;
     folly::fbstring name_;

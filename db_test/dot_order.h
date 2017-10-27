@@ -13,16 +13,16 @@
 #include <iostream>
 #include <algorithm>
 #include "folly/FBString.h"
-#include "market_def.pb.h"
+#include "db_core/skiplist.h"
 namespace namedot 
 {
 using namespace folly;
 struct DotOrder
 {
     double trade_vol_ {0};
-    double turnover_ {0};
-    uint64_t timestamp_ {0};
-    uint32_t sequence_ {0};
+    //double turnover_ {0};
+    //uint64_t timestamp_ {0};
+    //uint32_t sequence_ {0};
     Direction direction_{Direction::UNKNOW};
     double price_ {0};
     uint64_t trade_time_{0};
@@ -52,6 +52,7 @@ template<typename T> bool fun_vector_search(const T& con, const int64_t& search_
     {
         //std::cout <<" found";
     }
+    return true;
 }
 template<typename T>bool fun_map_insert(const folly::StringPiece& file_data, T& con)
 {
@@ -75,8 +76,33 @@ template<typename T> bool fun_map_search(const T& con, const int64_t& search_key
     {
         //std::cout <<" found";
     }
+    return true;
 }
-
+bool fun_skiplist_insert(const folly::StringPiece& file_data, kn::db::core::SkipList& con)
+{
+    int size = file_data.size()/sizeof(DotOrder);
+    if(size <=0 || (file_data.size() % sizeof(DotOrder) != 0 ))
+    {
+        std::cout << "file content error;" <<std::endl;
+        return false;
+    }
+    for(int i = 0; i < size; i++)
+    {
+        DotOrder* dot = (DotOrder*)(file_data.start() + i*sizeof(DotOrder));
+        auto data_node = std::make_shared<kn::db::core::DataNode>((void*)dot, sizeof(DotOrder), ((dot->trade_time_/100000000) << 32)|(dot->order_no_));
+        //con.Insert(data_node);
+    }
+    return true;
+}
+// bool fun_skiplist_search(kn::db::core::SkipList& con, const uint32_t& search_key)
+// {
+//     auto res = con.Find(search_key);
+//     if(res)
+//     {
+//         //std::cout <<" found";
+//     }
+//     return true;
+// }
 void set_rand_bench_single(const std::string& path)
 {
     folly::StringPiece file_data;
@@ -87,6 +113,7 @@ void set_rand_bench_single(const std::string& path)
     if (file_mapping)
     {
         file_data = file_mapping->data();
+        file_data = file_data.subpiece(sizeof(uint32_t));
     }
     else
     {
@@ -121,6 +148,13 @@ void set_rand_bench_single(const std::string& path)
             rand_bench_com<std::unordered_map<int64_t, DotOrder*>>(iters ,file_data,fun_map_insert<std::unordered_map<int64_t, DotOrder*>>);
             return iters;
         });
+    // addBenchmark(
+    //     __FILE__,
+    //     "order_skiplist_insert",
+    //     [=](int iters) {
+    //         rand_bench_com< kn::db::core::SkipList>(iters ,file_data,fun_vector_insert<kn::db::core::SkipList>);
+    //         return iters;
+    //     });
 }
 void set_search_bench_single(const std::string& path)
 {
@@ -132,6 +166,7 @@ void set_search_bench_single(const std::string& path)
     if (file_mapping)
     {
         file_data = file_mapping->data();
+        file_data = file_data.subpiece(sizeof(uint32_t));
     }
     else
     {
@@ -139,7 +174,7 @@ void set_search_bench_single(const std::string& path)
         return;
     }
     int size = file_data.size()/sizeof(DotOrder);
-    if(size <=0 || (file_data.size() % sizeof(DotOrder) != 0 ))
+    if(size <=0 || (file_data.size()% sizeof(DotOrder) != 0 ))
     {
         std::cout << "file content error;" <<std::endl;
         return;
@@ -153,7 +188,7 @@ void set_search_bench_single(const std::string& path)
     for(int i = 0; i < size; i++)
     {
         //folly::StringPiece onepiece(file_data.subpiece(i*sizeof(DotOrder), sizeof(DotOrder)));
-        DotOrder* dot = (DotOrder*)(file_data.start() + i*sizeof(DotOrder));
+        DotOrder* dot = (DotOrder*)(file_data.start() +sizeof(uint32_t)+ i*sizeof(DotOrder));
         no = ((dot->trade_time_/100000000) << 32)|(dot->order_no_);
         test.emplace_back(no);
         testlist.emplace_back(no);

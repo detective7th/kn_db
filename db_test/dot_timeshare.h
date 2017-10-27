@@ -11,6 +11,7 @@
 #include <memory>
 #include <iostream>
 #include "folly/FBString.h"
+#include "db_core/skiplist.h"
 namespace nts 
 {
 const int kSecurityCodeLength = 6;
@@ -19,10 +20,10 @@ struct TimeSharingDot
 {
     int64_t time_{0};
     double last_{0.0};
-    double avg_{0.0};
+    //double avg_{0.0};
     double vol_{0.0};
-    double total_vol_{0.0};
-    double turnover_{0.0};
+    //double total_vol_{0.0};
+    //double turnover_{0.0};
 };
 struct spookyhask 
 {
@@ -55,6 +56,7 @@ template<typename T> bool fun_vector_search(const T& con, const std::string& sea
     {
         //std::cout <<" found";
     }
+    return true;
 }
 template<typename T>bool fun_map_insert(const folly::StringPiece& file_data, T& con)
 {
@@ -78,6 +80,7 @@ template<typename T> bool fun_map_search(const T& con, const std::string& search
     {
         //std::cout <<" found";
     }
+    return true;
 }
 void set_rand_bench_single(const std::string& path,const std::string& id)
 {
@@ -89,6 +92,7 @@ void set_rand_bench_single(const std::string& path,const std::string& id)
     if (file_mapping)
     {
         file_data = file_mapping->data();
+        file_data = file_data.subpiece(sizeof(uint32_t));
     }
     else
     {
@@ -144,10 +148,12 @@ void set_search_bench_single(const std::string& path, const std::string& id)
     if(!file_mapping)
     {
         file_mapping = std::make_shared<folly::MemoryMapping>(path.c_str());
+        kcode_id_ = "000002";
     }
     if (file_mapping)
     {
         file_data = file_mapping->data();
+        file_data = file_data.subpiece(sizeof(uint32_t));
     }
     else
     {
@@ -172,6 +178,7 @@ void set_search_bench_single(const std::string& path, const std::string& id)
         TimeSharingDot* dot = (TimeSharingDot*)(file_data.start() + i*sizeof(TimeSharingDot));
         //test.emplace(id + std::to_string(dot->time_), dot);
         test.emplace_back(kcode_id_ + std::to_string(dot->time_));
+        testlist.emplace_back(kcode_id_ + std::to_string(dot->time_));
         test_map.emplace(kcode_id_ + std::to_string(dot->time_), dot);
         test_hash_map.emplace(kcode_id_ + std::to_string(dot->time_),dot);
         spooky_hash_map.emplace(kcode_id_ + std::to_string(dot->time_),dot);

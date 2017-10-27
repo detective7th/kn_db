@@ -14,7 +14,7 @@
 #include <memory>
 #include <iostream>
 #include "folly/FBString.h"
-#include "market_def.pb.h"
+#include "db_core/skiplist.h"
 namespace ndc 
 {
 using namespace folly;
@@ -27,10 +27,16 @@ struct DotCandle
     int64_t open_time_;
     int64_t close_time_;
     double  vol_;
-    double  total_vol_;
-    double  turnover_;
+    //double  total_vol_;
+    //double  turnover_;
 };
-
+struct spookyhask 
+{
+    size_t operator()(const std::string &key) const
+    {
+        return folly::hash::SpookyHashV2::Hash32(key.c_str(), key.size(), 0);
+    }
+};
 std::shared_ptr<folly::MemoryMapping> file_mapping = nullptr;
 std::string kcode_id_;
 template<typename T>bool fun_vector_insert(const folly::StringPiece& file_data, T& con)
@@ -55,6 +61,7 @@ template<typename T> bool fun_vector_search(const T& con, const std::string& sea
     {
         //std::cout <<" found";
     }
+    return true;
 }
 template<typename T>bool fun_map_insert(const folly::StringPiece& file_data, T& con)
 {
@@ -78,6 +85,7 @@ template<typename T> bool fun_map_search(const T& con, const std::string& search
     {
         //std::cout <<" found";
     }
+    return true;
 }
 void set_rand_bench_single(const std::string& path,const std::string& id)
 {
@@ -85,30 +93,31 @@ void set_rand_bench_single(const std::string& path,const std::string& id)
     if(!file_mapping)
     {
         file_mapping = std::make_shared<folly::MemoryMapping>(path.c_str());
+        kcode_id_ = "000002";
     }
     if (file_mapping)
     {
         file_data = file_mapping->data();
+        file_data = file_data.subpiece(sizeof(uint32_t));
     }
     else
     {
         std::cout << "Lock Settle Memory Map Failed" <<std::endl;
         return;
     }
-    std::string front;
-    std::size_t pos = path.find_last_of('.');
-    if (pos != std::string::npos)
-    {
-        std::size_t posline = path.find_last_of('/');
-        if (pos != std::string::npos)
-        {
-            if(pos - posline > 1)
-            {
-                front = path.substr(posline+1, pos - posline);
-            }
-        }
-    }
-    front = id +front;
+    //std::string front("000002");
+    // std::size_t pos = path.find_last_of('.');
+    // if (pos != std::string::npos)
+    // {
+    //     std::size_t posline = path.find_last_of('/');
+    //     if (pos != std::string::npos)
+    //     {
+    //         if(pos - posline > 1)
+    //         {
+    //             front = path.substr(posline+1, pos - posline);
+    //         }
+    //     }
+    // }
     addBenchmark(
         __FILE__,
         "candle_vector_insert",
@@ -148,6 +157,7 @@ void set_search_bench_single(const std::string& path, const std::string& id)
     if (file_mapping)
     {
         file_data = file_mapping->data();
+        file_data = file_data.subpiece(sizeof(uint32_t));
     }
     else
     {
@@ -165,14 +175,17 @@ void set_search_bench_single(const std::string& path, const std::string& id)
     std::list<std::string> testlist;
     std::map<std::string, DotCandle*> test_map;
     std::unordered_map<std::string, DotCandle*> test_hash_map;
+    std::unordered_map<std::string, DotCandle*, spookyhask> spooky_hash_map;
     for(int i = 0; i < size; i++)
     {
         //folly::StringPiece onepiece(file_data.subpiece(i*sizeof(DotCandle), sizeof(DotCandle)));
         DotCandle* dot = (DotCandle*)(file_data.start() + i*sizeof(DotCandle));
         //test.emplace(id + std::to_string(dot->open_time_), dot);
         test.emplace_back(kcode_id_ + std::to_string(dot->open_time_));
+        testlist.emplace_back(kcode_id_ + std::to_string(dot->open_time_));
         test_map.emplace(kcode_id_ + std::to_string(dot->open_time_), dot);
         test_hash_map.emplace(kcode_id_ + std::to_string(dot->open_time_),dot);
+        spooky_hash_map.emplace(kcode_id_ + std::to_string(dot->open_time_),dot);
     }
     std::vector<std::string> search_key = rand_date_17bit(id);
     addBenchmark(
@@ -200,7 +213,14 @@ void set_search_bench_single(const std::string& path, const std::string& id)
         __FILE__,
         "candle_unordered_map_search",
         [=](int iters) {
-        rand_search_bench_com<std::map<std::string, DotCandle*>, std::string>(iters ,test_map, search_key, fun_map_search<std::map<std::string, DotCandle*>>);
+        rand_search_bench_com<std::unordered_map<std::string, DotCandle*>, std::string>(iters ,test_hash_map, search_key, fun_map_search<std::unordered_map<std::string, DotCandle*>>);
+        return iters;
+        });
+    addBenchmark(
+        __FILE__,
+        "candle_unordered_map_with_spooky_hash_search",
+        [=](int iters) {
+        rand_search_bench_com<std::unordered_map<std::string, DotCandle*, spookyhask>, std::string>(iters ,spooky_hash_map, search_key, fun_map_search<std::unordered_map<std::string, DotCandle*, spookyhask>>);
         return iters;
         });
 }

@@ -10,15 +10,16 @@
 #include <memory>
 #include <iostream>
 #include <time.h>
+#include "db_core/skiplist.h"
 namespace ndt
 {
 using namespace folly;
 struct DotTransaction
 {
     double trade_vol_ {0};
-    double turnover_ {0};
-    uint64_t timestamp_ {0};
-    uint32_t sequence_ {0};
+    //double turnover_ {0};
+    //uint64_t timestamp_ {0};
+    //uint32_t sequence_ {0};
     Direction direction_{Direction::UNKNOW};
     double price_ {0};
     int64_t ask_order_no_ {0};
@@ -26,8 +27,8 @@ struct DotTransaction
     uint64_t trade_time_{0};
     TradeType trade_type_{TradeType::TT_UNKNOWN};
     int64_t transaction_no_ {0};
-    int64_t transaction_seq_ {0};
-    uint32_t channel_no_ {0};
+   // int64_t transaction_seq_ {0};
+    //uint32_t channel_no_ {0};
 };
 std::shared_ptr<folly::MemoryMapping> file_mapping = nullptr;
 template<typename T>bool fun_vector_insert(const folly::StringPiece& file_data, T& con)
@@ -52,6 +53,7 @@ template<typename T> bool fun_vector_search(const T& con, const int64_t& search_
     {
         //std::cout <<" found";
     }
+    return true;
 }
 template<typename T>bool fun_map_insert(const folly::StringPiece& file_data, T& con)
 {
@@ -75,6 +77,7 @@ template<typename T> bool fun_map_search(const T& con, const int64_t& search_key
     {
         //std::cout <<" found";
     }
+    return true;
 }
 
 void set_rand_bench_single(const std::string& path)
@@ -87,6 +90,7 @@ void set_rand_bench_single(const std::string& path)
     if (file_mapping)
     {
         file_data = file_mapping->data();
+        file_data = file_data.subpiece(sizeof(uint32_t));
     }
     else
     {
@@ -132,6 +136,7 @@ void set_search_bench_single(const std::string& path)
     if (file_mapping)
     {
         file_data = file_mapping->data();
+        file_data = file_data.subpiece(sizeof(uint32_t));
     }
     else
     {
@@ -139,7 +144,7 @@ void set_search_bench_single(const std::string& path)
         return;
     }
     int size = file_data.size()/sizeof(DotTransaction);
-    if(size <=0 || (file_data.size() % sizeof(DotTransaction) != 0 ))
+    if(size <=0 || (file_data.size()% sizeof(DotTransaction) != 0 ))
     {
         std::cout << "file content error;" <<std::endl;
         return;

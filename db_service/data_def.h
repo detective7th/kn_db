@@ -32,7 +32,26 @@ struct Transaction
     int trade_type_{0};
     int64_t transaction_no_{0};
 };
+struct Candle
+{
+    double  high_;
+    double  low_;
+    double  open_;
+    double  close_;
+    int64_t open_time_;
+    int64_t close_time_;
+    double  vol_;
 
+};
+struct TimeShare
+{
+    int64_t time_{0};
+    double last_{0.0};
+    //double avg_{0.0};
+    double vol_{0.0};
+    //double total_vol_{0.0};
+    //double turnover_{0.0};
+};
 template<class TypeRet, class TypeIn> TypeRet CombineHiLow(TypeIn hi, TypeIn low)
 {
     assert(sizeof(TypeRet) == (sizeof(TypeIn) << 1));

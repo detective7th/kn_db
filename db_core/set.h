@@ -61,6 +61,16 @@ public:
         return tables_.find(table_name)->second;
     }
 
+    DataNodes Find(folly::StringPiece table_name, KeyType start, KeyType end)
+    {
+        auto it = tables_.find(table_name);
+        if (it != tables_.end())
+        {
+            return it->second->Find(start, end);
+        }
+        return {nullptr, nullptr};
+    }
+
 protected:
     folly::StringKeyedUnorderedMap<std::shared_ptr<Table>> tables_;
     folly::fbstring name_;

@@ -10,7 +10,7 @@ if 'SCons.Script' == __name__:
     Import(name + '_version')
     Import('env', 'install_dir', 'AddProjectSource')
 
-    libs = ['db_core']
+    libs = ['db_core', 'gflags', "boost_system", "boost_filesystem", "folly"]
 
     src = AddProjectSource()
 

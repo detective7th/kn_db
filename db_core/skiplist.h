@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef _KN_DB_CACHE_SENSITIVE_LINE_SKIPLIST_H_
-#define _KN_DB_CACHE_SENSITIVE_LINE_SKIPLIST_H_
+#ifndef _KN_DB_CORE_CACHE_SENSITIVE_LINE_SKIPLIST_H_
+#define _KN_DB_CORE_CACHE_SENSITIVE_LINE_SKIPLIST_H_
 
 #pragma once
 
@@ -28,6 +28,7 @@
 #include <iostream>
 #include <algorithm>
 #include <assert.h>
+#include <unistd.h>
 
 namespace kn
 {
@@ -36,14 +37,15 @@ namespace db
 namespace core
 {
 
+using KeyType = uint64_t;
+
 namespace
 {
 constexpr auto MAX_SKIP = 5;
-constexpr auto TOP_LANE_BLOCK = 16;
+static const auto TOP_LANE_BLOCK = sysconf(_SC_LEVEL1_DCACHE_LINESIZE) / sizeof(KeyType);
 constexpr auto SIMD_SEGMENTS = 8;
 }
 
-using KeyType = uint32_t;
 
 class DataNode
 {
@@ -54,7 +56,7 @@ class DataNode
 
 public:
     DataNode() = default;
-    DataNode(void* data, size_t data_len, uint32_t key)
+    DataNode(void* data, size_t data_len, KeyType key)
             :data_(data)
             ,data_len_(data_len)
             ,key_(key) {}
@@ -333,7 +335,7 @@ public:
         return os;
     }
 
-    auto InsertElement(std::shared_ptr<DataNode>& new_node)
+    uint32_t InsertElement(std::shared_ptr<DataNode>& new_node)
     {
         auto cur_pos = /*start_ +*/ elements_;
         auto pos_limit = /*cur_pos + */slot_num_ - 1;
@@ -348,7 +350,7 @@ public:
             if (0 == level_) proxy_->Set(cur_pos /*- start_*/, new_node);
             ++elements_;
         }
-        else return std::numeric_limits<KeyType>::max();
+        else return std::numeric_limits<uint32_t>::max();
 
         return cur_pos + start_;
     }
@@ -387,19 +389,19 @@ public:
         return cur_pos;
     }
 
-    std::shared_ptr<DataNode> SearchProxyLane(uint32_t pos, uint32_t key)
+    std::shared_ptr<DataNode> SearchProxyLane(uint32_t pos, KeyType key)
     {
         if (proxy_) return proxy_->Search(pos, key);
         return nullptr;
     }
 
-    std::shared_ptr<DataNode> SearchProxyLaneLt(uint32_t pos, uint32_t key)
+    std::shared_ptr<DataNode> SearchProxyLaneLt(uint32_t pos, KeyType key)
     {
         if (proxy_) return proxy_->SearchLt(pos, key);
         return nullptr;
     }
 
-    std::shared_ptr<DataNode> SearchProxyLaneGt(uint32_t pos, uint32_t key)
+    std::shared_ptr<DataNode> SearchProxyLaneGt(uint32_t pos, KeyType key)
     {
         if (proxy_) return proxy_->SearchGt(pos, key);
         return nullptr;
@@ -618,4 +620,4 @@ protected:
 } //db
 } //kn
 
-#endif // _KN_DB_CACHE_SENSITIVE_LINE_SKIPLIST_H_
+#endif // _KN_DB_CORE_CACHE_SENSITIVE_LINE_SKIPLIST_H_

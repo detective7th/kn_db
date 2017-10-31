@@ -8,8 +8,10 @@
 #include <folly/String.h>
 #include <folly/FixedString.h>
 #include <string>
+#include <algorithm>
 #include "db_core/data_base.h"
 #include "db_service/data_def.h"
+
 const int kSearchCount = 1;
 std::vector<int64_t> rand_count()
 {
@@ -123,5 +125,9 @@ void release_skillist(const std::string path, kn::db::core::DataBase& base)
             }
         }
     }
+}
+bool fun_vector_binary_search(const std::vector<int64_t>& con, const int64_t& search_key)
+{
+    return std::binary_search (con.begin(), con.end(), search_key);
 }
 #endif

@@ -17,10 +17,10 @@ using namespace folly;
 int main(int argc, char** argv) {
  
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  kn::db::core::DataBase base("test");
-  release_skillist("/media/psf/Home/Documents/kn_db/kn_db/data",base);
-  namedot::set_search_skiplist(base);
-  //namedot::set_search_bench_single();
+  // kn::db::core::DataBase base("test");
+  // release_skillist("/media/psf/Home/Documents/kn_db/kn_db/data",base);
+  // namedot::set_search_skiplist(base);
+  namedot::set_search_bench_single();
   //template search test
   //namedot::set_rand_bench_single("/media/psf/Home/Documents/newlibinstall/test_file/1020_orders_last");
   //namedot::set_search_bench_single("/media/psf/Home/Documents/newlibinstall/test_file/1020_orders_last");

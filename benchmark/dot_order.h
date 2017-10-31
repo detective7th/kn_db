@@ -15,6 +15,8 @@
 #include "folly/FBString.h"
 #include "db_core/data_base.h"
 #include "db_service/data_def.h"
+#include "skiplist.hpp"
+#include "btree.h"
 namespace namedot 
 {
 using namespace folly;
@@ -82,10 +84,10 @@ template<typename T>bool fun_map_insert(const folly::StringPiece& file_data, T& 
 template<typename T> bool fun_map_search(const T& con, const int64_t& search_key)
 {
     auto res = con.find(search_key);
-    if(res != con.end())
-    {
-        //std::cout <<" found";
-    }
+    // if(res != con.end())
+    // {
+    //     //std::cout <<" found";
+    // }
     return true;
 }
 
@@ -203,7 +205,8 @@ void set_rand_bench_single(const std::string& path)
 //             rand_search_bench_com<std::unordered_map<int64_t, Order*>, int64_t>(iters ,test_hash_map, search_key, fun_map_search<std::unordered_map<int64_t, Order*>>);
 //             return iters;
 //         });    
-//     } 
+//     }
+
 void set_search_bench_single()
 {
     std::string path = "/media/psf/Home/Documents/kn_db/kn_db/data/orders/000002";
@@ -233,6 +236,8 @@ void set_search_bench_single()
     std::list<int64_t> testlist;
     std::map<int64_t, std::shared_ptr<DataNode>> test_map;
     std::unordered_map<int64_t, std::shared_ptr<DataNode>> test_hash_map;
+    guoxiao::skiplist::SkipList<int64_t, std::shared_ptr<DataNode>> test_skip_list;
+    static trees::BTree<int64_t, std::shared_ptr<DataNode>> test_btree(64);
     uint64_t no = 0;
     std::vector<int64_t> search_key;
     for(int i = 0; i < size; i++)
@@ -248,8 +253,10 @@ void set_search_bench_single()
         testlist.emplace_back(no);
         test_map.emplace(no, ptr);
         test_hash_map.emplace(no, ptr);
+        test_skip_list.emplace(no, ptr);
+        test_btree.insert(no, ptr);
     }
-    std::reverse(search_key.begin(), search_key.end());
+    //std::reverse(search_key.begin(), search_key.end());
     std::cout<< "search key size:" << search_key.size() << std::endl;
     // addBenchmark(
     //     __FILE__,
@@ -277,6 +284,27 @@ void set_search_bench_single()
         "order_unordered_map_search",
         [=](int iters) {
             rand_search_bench_com<std::unordered_map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_hash_map, search_key, fun_map_search<std::unordered_map<int64_t, std::shared_ptr<DataNode>>>);
+            return iters;
+        });
+    addBenchmark(
+        __FILE__,
+        "order_vector_binary_search",
+        [=](int iters) {
+            rand_search_bench_com<std::vector<int64_t>, int64_t>(iters ,test, search_key, fun_vector_binary_search);
+            return iters;
+        });
+    addBenchmark(
+        __FILE__,
+        "order_tradition_skiplist_search",
+        [=](int iters) {
+            rand_search_bench_com<guoxiao::skiplist::SkipList<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_skip_list, search_key, fun_map_search<guoxiao::skiplist::SkipList<int64_t,std::shared_ptr<DataNode>>>);
+            return iters;
+        });
+    addBenchmark(
+        __FILE__,
+        "order_btree_search",
+        [=](int iters) {
+            rand_search_bench_com<trees::BTree<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_btree, search_key, fun_map_search<trees::BTree<int64_t,std::shared_ptr<DataNode>>>);
             return iters;
         });    
     } 

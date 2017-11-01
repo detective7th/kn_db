@@ -12,7 +12,7 @@
 #include "db_core/data_base.h"
 #include "db_service/data_def.h"
 
-const int kSearchCount = 1;
+const int kSearchCount = 1000000;
 std::vector<int64_t> rand_count()
 {
     std::vector<int64_t> vec;
@@ -22,6 +22,23 @@ std::vector<int64_t> rand_count()
     {
         
         vec.emplace_back(((int64_t)rand()%30 + base) << 32| ((int64_t)rand() % 10000000));
+    }
+    return vec;
+}
+std::vector<int64_t> rand_count_in_vec(const std::vector<int64_t>& data)
+{
+    std::vector<int64_t> vec;
+    if(data.empty())
+    {
+        std::cout<< "data source is empty"<< std::endl;
+        return vec;
+    }
+    srand(time(0));
+    int value = 0;
+    for(int i = 0; i < kSearchCount; i ++)
+    {
+        value = rand() % data.size();
+        vec.emplace_back(data.at(value));
     }
     return vec;
 }
@@ -70,13 +87,17 @@ template<typename T, typename P>void rand_search_bench_com(int iters,const T& di
         while (iters--) {
             for(const auto& key : search_key)
             {
-              fun_search(dicts, key);
+                fun_search(dicts, key);
+            //   if(!fun_search(dicts, key))
+            //   {
+            //     //std::cout << "Not fount key:" << key << "\t";
+            //   }
               folly::doNotOptimizeAway(dicts);   
             }
         }
     });
 }
-void release_skillist(const std::string path, kn::db::core::DataBase& base)
+void release_skillist(const std::string path, kn::db::core::DataBase& base, uint32_t max_level = 8, uint32_t skip = 4)
 {
     folly::fbstring set_name;
     for (boost::filesystem::recursive_directory_iterator it(path);
@@ -117,7 +138,7 @@ void release_skillist(const std::string path, kn::db::core::DataBase& base)
                                                                    , it->path().leaf().string().c_str()
                                                                    , hash_func);
 
-                table->InitSkipList();
+                table->InitSkipList(max_level, skip);
 
                 assert(base.AddTable({set_name.begin(), set_name.end()}, table));
 

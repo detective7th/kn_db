@@ -130,7 +130,10 @@ namespace trees {
         return 0;
       }
     }
-    
+    template <class Key, class Value> Value BTree<Key, Value>::end() const
+    {
+      return 0;
+    }
     template <class Key, class Value>
     typename BTree<Key, Value>::Node::Ptr
     BTree<Key, Value>::find_node(Key key) const {

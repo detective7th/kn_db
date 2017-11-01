@@ -11,20 +11,12 @@
 #include <memory>
 #include <iostream>
 #include "folly/FBString.h"
-#include "db_core/skiplist.h"
+#include "db_service/data_def.h"
 namespace nts 
 {
 const int kSecurityCodeLength = 6;
 using namespace folly;
-struct TimeSharingDot
-{
-    int64_t time_{0};
-    double last_{0.0};
-    //double avg_{0.0};
-    double vol_{0.0};
-    //double total_vol_{0.0};
-    //double turnover_{0.0};
-};
+using namespace kn::db::service;
 struct spookyhask 
 {
     size_t operator()(const std::string &key) const
@@ -36,15 +28,15 @@ std::shared_ptr<folly::MemoryMapping> file_mapping = nullptr;
 std::string kcode_id_;
 template<typename T>bool fun_vector_insert(const folly::StringPiece& file_data, T& con)
 {
-    int size = file_data.size()/sizeof(TimeSharingDot);
-    if(size <=0 || (file_data.size() % sizeof(TimeSharingDot) != 0 ))
+    int size = file_data.size()/sizeof(TimeShare);
+    if(size <=0 || (file_data.size() % sizeof(TimeShare) != 0 ))
     {
         std::cout << "file content error;" <<std::endl;
         return false;
     }
     for(int i = 0; i < size; i++)
     {
-        TimeSharingDot* dot = (TimeSharingDot*)(file_data.start() + i*sizeof(TimeSharingDot));
+        TimeShare* dot = (TimeShare*)(file_data.start() + i*sizeof(TimeShare));
         con.emplace_back(kcode_id_ + std::to_string(dot->time_));
     }
     return true;
@@ -60,15 +52,15 @@ template<typename T> bool fun_vector_search(const T& con, const std::string& sea
 }
 template<typename T>bool fun_map_insert(const folly::StringPiece& file_data, T& con)
 {
-    int size = file_data.size()/sizeof(TimeSharingDot);
-    if(size <=0 || (file_data.size() % sizeof(TimeSharingDot) != 0 ))
+    int size = file_data.size()/sizeof(TimeShare);
+    if(size <=0 || (file_data.size() % sizeof(TimeShare) != 0 ))
     {
         std::cout << "file content error;" <<std::endl;
         return false;
     }
     for(int i = 0; i < size; i++)
     {
-        TimeSharingDot* dot = (TimeSharingDot*)(file_data.start() + i*sizeof(TimeSharingDot));
+        TimeShare* dot = (TimeShare*)(file_data.start() + i*sizeof(TimeShare));
         con.emplace(kcode_id_ + std::to_string(dot->time_), dot);
     }
     return true;
@@ -131,14 +123,14 @@ void set_rand_bench_single(const std::string& path,const std::string& id)
         __FILE__,
         "timesharing_map_insert",
         [=](int iters) {
-            rand_bench_com<std::map<std::string, TimeSharingDot*>>(iters ,file_data, fun_map_insert<std::map<std::string, TimeSharingDot*>>);
+            rand_bench_com<std::map<std::string, TimeShare*>>(iters ,file_data, fun_map_insert<std::map<std::string, TimeShare*>>);
             return iters;
         });
     addBenchmark(
         __FILE__,
         "timesharing_unordered_map_insert",
         [=](int iters) {
-            rand_bench_com<std::unordered_map<std::string, TimeSharingDot*>>(iters ,file_data, fun_map_insert<std::unordered_map<std::string, TimeSharingDot*>>);
+            rand_bench_com<std::unordered_map<std::string, TimeShare*>>(iters ,file_data, fun_map_insert<std::unordered_map<std::string, TimeShare*>>);
             return iters;
         });
 }
@@ -160,8 +152,8 @@ void set_search_bench_single(const std::string& path, const std::string& id)
         std::cout << "Lock Settle Memory Map Failed" <<std::endl;
         return;
     }
-    int size = file_data.size()/sizeof(TimeSharingDot);
-    if(size <=0 || (file_data.size() % sizeof(TimeSharingDot) != 0 ))
+    int size = file_data.size()/sizeof(TimeShare);
+    if(size <=0 || (file_data.size() % sizeof(TimeShare) != 0 ))
     {
         std::cout << "file content error;" <<std::endl;
         return;
@@ -169,13 +161,13 @@ void set_search_bench_single(const std::string& path, const std::string& id)
     std::cout <<"file: "<<__FILE__<< "single size : " << size << std::endl;
     std::vector<std::string> test;
     std::list<std::string> testlist;
-    std::map<std::string, TimeSharingDot*> test_map;
-    std::unordered_map<std::string, TimeSharingDot*> test_hash_map;
-    std::unordered_map<std::string, TimeSharingDot*, spookyhask> spooky_hash_map;
+    std::map<std::string, TimeShare*> test_map;
+    std::unordered_map<std::string, TimeShare*> test_hash_map;
+    std::unordered_map<std::string, TimeShare*, spookyhask> spooky_hash_map;
     for(int i = 0; i < size; i++)
     {
-        //folly::StringPiece onepiece(file_data.subpiece(i*sizeof(TimeSharingDot), sizeof(TimeSharingDot)));
-        TimeSharingDot* dot = (TimeSharingDot*)(file_data.start() + i*sizeof(TimeSharingDot));
+        //folly::StringPiece onepiece(file_data.subpiece(i*sizeof(TimeShare), sizeof(TimeShare)));
+        TimeShare* dot = (TimeShare*)(file_data.start() + i*sizeof(TimeShare));
         //test.emplace(id + std::to_string(dot->time_), dot);
         test.emplace_back(kcode_id_ + std::to_string(dot->time_));
         testlist.emplace_back(kcode_id_ + std::to_string(dot->time_));
@@ -202,21 +194,21 @@ void set_search_bench_single(const std::string& path, const std::string& id)
         __FILE__,
         "timesharing_map_search",
         [=](int iters) {
-        rand_search_bench_com<std::map<std::string, TimeSharingDot*>, std::string>(iters ,test_map, search_key, fun_map_search<std::map<std::string, TimeSharingDot*>>);
+        rand_search_bench_com<std::map<std::string, TimeShare*>, std::string>(iters ,test_map, search_key, fun_map_search<std::map<std::string, TimeShare*>>);
         return iters;
         });
     addBenchmark(
         __FILE__,
         "timesharing_unordered_map_search",
         [=](int iters) {
-        rand_search_bench_com<std::unordered_map<std::string, TimeSharingDot*>, std::string>(iters ,test_hash_map, search_key, fun_map_search<std::unordered_map<std::string, TimeSharingDot*>>);
+        rand_search_bench_com<std::unordered_map<std::string, TimeShare*>, std::string>(iters ,test_hash_map, search_key, fun_map_search<std::unordered_map<std::string, TimeShare*>>);
         return iters;
         });
     addBenchmark(
         __FILE__,
         "timesharing_unordered_map_with_spooky_hash_search",
         [=](int iters) {
-        rand_search_bench_com<std::unordered_map<std::string, TimeSharingDot*, spookyhask>, std::string>(iters ,spooky_hash_map, search_key, fun_map_search<std::unordered_map<std::string, TimeSharingDot*, spookyhask>>);
+        rand_search_bench_com<std::unordered_map<std::string, TimeShare*, spookyhask>, std::string>(iters ,spooky_hash_map, search_key, fun_map_search<std::unordered_map<std::string, TimeShare*, spookyhask>>);
         return iters;
         });
 }

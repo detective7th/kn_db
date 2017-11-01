@@ -10,38 +10,23 @@
 #include <memory>
 #include <iostream>
 #include <time.h>
-#include "db_core/skiplist.h"
+#include "db_service/data_def.h"
 namespace ndt
 {
 using namespace folly;
-struct DotTransaction
-{
-    double trade_vol_ {0};
-    //double turnover_ {0};
-    //uint64_t timestamp_ {0};
-    //uint32_t sequence_ {0};
-    Direction direction_{Direction::UNKNOW};
-    double price_ {0};
-    int64_t ask_order_no_ {0};
-    int64_t bid_order_no_ {0};
-    uint64_t trade_time_{0};
-    TradeType trade_type_{TradeType::TT_UNKNOWN};
-    int64_t transaction_no_ {0};
-   // int64_t transaction_seq_ {0};
-    //uint32_t channel_no_ {0};
-};
+using namespace kn::db::service;
 std::shared_ptr<folly::MemoryMapping> file_mapping = nullptr;
 template<typename T>bool fun_vector_insert(const folly::StringPiece& file_data, T& con)
 {
-    int size = file_data.size()/sizeof(DotTransaction);
-    if(size <=0 || (file_data.size() % sizeof(DotTransaction) != 0 ))
+    int size = file_data.size()/sizeof(Transaction);
+    if(size <=0 || (file_data.size() % sizeof(Transaction) != 0 ))
     {
         std::cout << "file content error;" <<std::endl;
         return false;
     }
     for(int i = 0; i < size; i++)
     {
-        DotTransaction* dot = (DotTransaction*)(file_data.start() + i*sizeof(DotTransaction));
+        Transaction* dot = (Transaction*)(file_data.start() + i*sizeof(Transaction));
         con.emplace_back(((dot->trade_time_/100000000) << 32)|(dot->transaction_no_));
     }
     return true;
@@ -57,15 +42,15 @@ template<typename T> bool fun_vector_search(const T& con, const int64_t& search_
 }
 template<typename T>bool fun_map_insert(const folly::StringPiece& file_data, T& con)
 {
-    int size = file_data.size()/sizeof(DotTransaction);
-    if(size <=0 || (file_data.size() % sizeof(DotTransaction) != 0 ))
+    int size = file_data.size()/sizeof(Transaction);
+    if(size <=0 || (file_data.size() % sizeof(Transaction) != 0 ))
     {
         std::cout << "file content error;" <<std::endl;
         return false;
     }
     for(int i = 0; i < size; i++)
     {
-        DotTransaction* dot = (DotTransaction*)(file_data.start() + i*sizeof(DotTransaction));
+        Transaction* dot = (Transaction*)(file_data.start() + i*sizeof(Transaction));
         con.emplace(((dot->trade_time_/100000000) << 32)|(dot->transaction_no_), dot);
     }
     return true;
@@ -115,14 +100,14 @@ void set_rand_bench_single(const std::string& path)
         __FILE__,
         "transaction_map_insert",
         [=](int iters) {
-            rand_bench_com<std::map<int64_t, DotTransaction*>>(iters ,file_data,fun_map_insert<std::map<int64_t, DotTransaction*>>);
+            rand_bench_com<std::map<int64_t, Transaction*>>(iters ,file_data,fun_map_insert<std::map<int64_t, Transaction*>>);
             return iters;
         });
     addBenchmark(
         __FILE__,
         "transaction_unordered_map_insert",
         [=](int iters) {
-            rand_bench_com<std::unordered_map<int64_t, DotTransaction*>>(iters ,file_data,fun_map_insert<std::unordered_map<int64_t, DotTransaction*>>);
+            rand_bench_com<std::unordered_map<int64_t, Transaction*>>(iters ,file_data,fun_map_insert<std::unordered_map<int64_t, Transaction*>>);
             return iters;
         });
 }
@@ -143,8 +128,8 @@ void set_search_bench_single(const std::string& path)
         std::cout << "Lock Settle Memory Map Failed" <<std::endl;
         return;
     }
-    int size = file_data.size()/sizeof(DotTransaction);
-    if(size <=0 || (file_data.size()% sizeof(DotTransaction) != 0 ))
+    int size = file_data.size()/sizeof(Transaction);
+    if(size <=0 || (file_data.size()% sizeof(Transaction) != 0 ))
     {
         std::cout << "file content error;" <<std::endl;
         return;
@@ -152,12 +137,12 @@ void set_search_bench_single(const std::string& path)
     std::cout <<"file: "<<__FILE__<< "single size : " << size << std::endl;
     std::vector<int64_t> test;
     std::list<int64_t> testlist;
-    std::map<int64_t, DotTransaction*> test_map;
-    std::unordered_map<int64_t, DotTransaction*> test_hash_map;
+    std::map<int64_t, Transaction*> test_map;
+    std::unordered_map<int64_t, Transaction*> test_hash_map;
     for(int i = 0; i < size; i++)
     {
-        //folly::StringPiece onepiece(file_data.subpiece(i*sizeof(DotTransaction), sizeof(DotTransaction)));
-        DotTransaction* dot = (DotTransaction*)(file_data.start() + i*sizeof(DotTransaction));
+        //folly::StringPiece onepiece(file_data.subpiece(i*sizeof(Transaction), sizeof(Transaction)));
+        Transaction* dot = (Transaction*)(file_data.start() + i*sizeof(Transaction));
         test.emplace_back( dot->transaction_no_);
         testlist.emplace_back( dot->transaction_no_);
         test_map.emplace( dot->transaction_no_, dot);
@@ -182,14 +167,14 @@ void set_search_bench_single(const std::string& path)
         __FILE__,
         "transaction_map_search",
         [=](int iters) {
-            rand_search_bench_com<std::map<int64_t, DotTransaction*>, int64_t>(iters ,test_map, search_key, fun_map_search<std::map<int64_t, DotTransaction*>>);
+            rand_search_bench_com<std::map<int64_t, Transaction*>, int64_t>(iters ,test_map, search_key, fun_map_search<std::map<int64_t, Transaction*>>);
             return iters;
         });    
     addBenchmark(
         __FILE__,
         "transaction_unordered_map_search",
         [=](int iters) {
-            rand_search_bench_com<std::unordered_map<int64_t, DotTransaction*>, int64_t>(iters ,test_hash_map, search_key, fun_map_search<std::unordered_map<int64_t, DotTransaction*>>);
+            rand_search_bench_com<std::unordered_map<int64_t, Transaction*>, int64_t>(iters ,test_hash_map, search_key, fun_map_search<std::unordered_map<int64_t, Transaction*>>);
             return iters;
         });    
     } 

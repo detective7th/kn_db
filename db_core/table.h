@@ -67,12 +67,12 @@ public:
     }
     folly::StringPiece name() { return {name_.begin(), name_.end()}; }
 
-    auto Find(KeyType key)
+    inline auto Find(const KeyType& key)
     {
         return skip_list_->Find(key);
     }
 
-    DataNodes Find(KeyType start, KeyType end)
+    inline DataNodes Find(const KeyType& start, const KeyType& end)
     {
         return skip_list_->Find(start, end);
     }

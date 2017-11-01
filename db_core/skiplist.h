@@ -172,7 +172,7 @@ public:
         return os;
     }
 
-    DataNode* Search(KeyType key)
+    inline DataNode* Search(const KeyType& key)
     {
         for (uint8_t i = 0; i != skip_; ++i)
         {
@@ -181,7 +181,7 @@ public:
         return nullptr;
     }
 
-    DataNode* SearchLt(KeyType key)
+    inline DataNode* SearchLt(const KeyType& key)
     {
         //std::shared_ptr<DataNode> ret = nodes_[skip_ - 1];
         for (uint8_t i = 0; i != skip_; ++i)
@@ -198,7 +198,7 @@ public:
         return nullptr;
     }
 
-    DataNode* SearchGt(KeyType key)
+    inline DataNode* SearchGt(const KeyType& key)
     {
         //std::shared_ptr<DataNode> ret = nodes_[skip_ - 1];
         for (int16_t i = skip_ - 1; 0 <= i; --i)
@@ -208,7 +208,7 @@ public:
         return nullptr;
     }
 
-    DataNode* Get(uint8_t pos)
+    inline DataNode* Get(uint8_t pos)
     {
         if (pos < skip_) return nodes_[pos];
         return nullptr;
@@ -268,12 +268,12 @@ public:
         return os;
     }
 
-    auto Search(uint32_t pos, KeyType key)
+    inline auto Search(const uint32_t& pos, const KeyType& key)
     {
         return nodes_[pos].Search(key);
     }
 
-    DataNode* SearchLt(uint32_t pos, KeyType key)
+    inline DataNode* SearchLt(const uint32_t& pos, const KeyType& key)
     {
         auto ret = nodes_[pos].SearchLt(key);
         if (ret)
@@ -287,7 +287,7 @@ public:
         return ret;
     }
 
-    DataNode* SearchGt(uint32_t pos, KeyType key)
+    inline DataNode* SearchGt(const uint32_t& pos, const KeyType& key)
     {
         auto ret = nodes_[pos].SearchGt(key);
         if (!ret) ret = nodes_[0].Get(0);
@@ -388,7 +388,7 @@ public:
         return nullptr;
     }
 
-    auto BinarySearch(uint32_t key)
+    inline auto BinarySearch(const uint32_t& key)
     {
         uint32_t cur_pos = 0;
         uint32_t first = 0;
@@ -416,19 +416,19 @@ public:
         return cur_pos;
     }
 
-    DataNode* SearchProxyLane(uint32_t pos, KeyType key)
+    inline DataNode* SearchProxyLane(uint32_t pos, KeyType key)
     {
         if (proxy_) return proxy_->Search(pos, key);
         return nullptr;
     }
 
-    DataNode* SearchProxyLaneLt(uint32_t pos, KeyType key)
+    inline DataNode* SearchProxyLaneLt(uint32_t pos, KeyType key)
     {
         if (proxy_) return proxy_->SearchLt(pos, key);
         return nullptr;
     }
 
-    DataNode* SearchProxyLaneGt(uint32_t pos, KeyType key)
+    inline DataNode* SearchProxyLaneGt(uint32_t pos, KeyType key)
     {
         if (proxy_) return proxy_->SearchGt(pos, key);
         return nullptr;
@@ -500,7 +500,7 @@ public:
         return p.second;
     }
 
-    auto Find(KeyType key)
+    inline auto Find(const KeyType& key)
     {
         //cur_pos is abs idx
         auto cur_pos = lanes_[max_level_ - 1].BinarySearch(key);
@@ -508,7 +508,7 @@ public:
         return lanes_[0].SearchProxyLane(r_pos, key);
     }
 
-    auto Find(KeyType start, KeyType end)
+    inline auto Find(KeyType start, KeyType end)
     {
         auto cur_pos = lanes_[max_level_ - 1].BinarySearch(start);
         auto r_pos = GetProxyLaneRelPos(cur_pos, start);
@@ -601,7 +601,7 @@ protected:
         }
     }
 
-    uint32_t GetProxyLaneRelPos(uint32_t& cur_pos, KeyType key)
+    inline uint32_t GetProxyLaneRelPos(uint32_t& cur_pos, const KeyType& key)
     {
         uint32_t r_pos = 0;
         for (auto level = max_level_ - 1; 0 <= level; --level)
@@ -659,12 +659,12 @@ public:
         return nullptr;
     }
 
-    auto Find(KeyType key)
+    inline auto Find(const KeyType& key)
     {
         return lanes_->Find(key);
     }
 
-    auto Find(KeyType start, KeyType end)
+    inline auto Find(const KeyType& start, const KeyType& end)
     {
         return lanes_->Find(start, end);
     }

@@ -54,7 +54,7 @@ public:
         return false;
     }
 
-    std::shared_ptr<DataNode> Find(folly::StringPiece set_name, folly::StringPiece table_name
+    DataNode* Find(folly::StringPiece set_name, folly::StringPiece table_name
                                    , KeyType key)
     {
         auto it = sets_.find(set_name);

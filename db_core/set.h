@@ -46,7 +46,7 @@ public:
 
     folly::StringPiece name() { return {name_.begin(), name_.end()}; }
 
-    std::shared_ptr<DataNode> Find(folly::StringPiece table_name, KeyType key)
+    DataNode* Find(folly::StringPiece table_name, KeyType key)
     {
         auto it = tables_.find(table_name);
         if (it != tables_.end())

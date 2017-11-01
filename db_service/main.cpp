@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
                                                                    , it->path().leaf().string().c_str()
                                                                    , hash_func);
 
-                table->InitSkipList();
+                table->InitSkipList(8, 5);
 
                 assert(base.AddTable({set_name.begin(), set_name.end()}, table));
 

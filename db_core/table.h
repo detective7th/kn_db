@@ -59,11 +59,9 @@ public:
         auto row_num = data.size()/row_len_;
 
         skip_list_ = std::make_unique<SkipList>(max_level, skip);
-        DataNode tmp;
         for (size_t i = 0; i != row_num; ++i)
         {
-            DataNode tmp{(void*)data.begin(), row_len_, hash_func_((void*)data.begin(), this)};
-            assert(skip_list_->Insert(&tmp));
+            assert(skip_list_->Insert(new DataNode{(void*)data.begin(), row_len_, hash_func_((void*)data.begin(), this)}));
             data.advance(row_len_);
         }
     }

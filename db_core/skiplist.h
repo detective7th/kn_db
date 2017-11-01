@@ -62,14 +62,6 @@ public:
             ,data_len_(data_len)
             ,key_(key) {}
 
-    virtual ~DataNode()
-    {
-        //free(data_);
-        data_len_ = 0;
-        key_ = 0;
-        next_ = nullptr;
-    }
-
     friend inline std::ostream& operator << (std::ostream& os, DataNode& data)
     {
         if (data.data_) os << "[" << data.key_ << "]";
@@ -99,16 +91,52 @@ class ProxyNode
     friend class ProxyLane;
 
 public:
+    ProxyNode() = default;
+
+    explicit ProxyNode(uint8_t skip)
+            :skip_(skip)
+            ,nodes_(new DataNode*[skip_], std::default_delete<DataNode*[]>())
+    {
+        std::fill_n(nodes_.get(), skip_, nullptr);
+    }
+
     ProxyNode(DataNode*& node, uint8_t skip)
             //:keys_(new KeyType[skip], std::default_delete<KeyType[]>())
             :skip_(skip)
-            ,nodes_(new DataNode[skip_], std::default_delete<DataNode[]>())
+            ,nodes_(new DataNode*[skip_], std::default_delete<DataNode*[]>())
     {
         //std::fill_n(keys_.get(), skip, std::numeric_limits<KeyType>::max());
         //keys_[0] = node->key_;
-        nodes_[0].data_ = node->data_;
-        nodes_[0].data_len_ = node->data_len_;
-        nodes_[0].key_ = node->key_;
+        std::fill_n(nodes_.get(), skip_, nullptr);
+        nodes_[0] = node;
+    }
+
+    ~ProxyNode()
+    {
+        if (nodes_)
+        {
+            for (int i = 0; i != skip_; ++i)
+            {
+                if (nodes_[i])
+                {
+                    delete nodes_[i];
+                    nodes_[i] = nullptr;
+                }
+            }
+        }
+    }
+
+    void Init(int skip)
+    {
+        skip_ = skip;
+        nodes_ = std::make_unique<DataNode*[]>(skip_);
+    }
+
+    ProxyNode& operator=(ProxyNode&& r)
+    {
+        skip_ = r.skip_;
+        nodes_ = std::move(r.nodes_);
+        return *this;
     }
 
     DataNode* Add(DataNode*& node)
@@ -116,8 +144,8 @@ public:
         decltype(skip_) pos_add = 0;
         for (;pos_add != skip_; ++pos_add)
         {
-            if (!nodes_[pos_add].data_ && !nodes_[pos_add].data_len_) break;
-            if (nodes_[pos_add].key_ == node->key_)
+            if (!nodes_[pos_add]) break;
+            if (nodes_[pos_add]->key_ == node->key_)
             {
                 //std::cerr << "proxy lane key collision" << std::endl;
                 //return false;
@@ -129,18 +157,16 @@ public:
             return nullptr;
         }
 
-        nodes_[pos_add].data_ = node->data_;
-        nodes_[pos_add].data_len_ = node->data_len_;
-        nodes_[pos_add].key_ = node->key_;
+        nodes_[pos_add] = node;
 
-        return &(nodes_[pos_add]);
+        return nodes_[pos_add];
     }
 
     friend inline std::ostream& operator << (std::ostream& os, ProxyNode& node)
     {
         for (decltype(node.skip_) i = 0; i != node.skip_; ++i)
         {
-            if (node.nodes_[i].data_ && node.nodes_[i].data_len_) os << node.nodes_[i]; else os << "[n]";
+            if (node.nodes_[i]) os << *(node.nodes_[i]); else os << "[n]";
         }
         //os << "|";
         return os;
@@ -150,7 +176,7 @@ public:
     {
         for (uint8_t i = 0; i != skip_; ++i)
         {
-            if (nodes_[i].key_ == key) return &(nodes_[i]);
+            if (nodes_[i]->key_ == key) return nodes_[i];
         }
         return nullptr;
     }
@@ -160,12 +186,12 @@ public:
         //std::shared_ptr<DataNode> ret = nodes_[skip_ - 1];
         for (uint8_t i = 0; i != skip_; ++i)
         {
-            if (nodes_[i].key_)
+            if (nodes_[i]->key_)
             {
-                if (key <= nodes_[i].key_)
+                if (key <= nodes_[i]->key_)
                 {
-                    if (i + 1 != skip_) return &(nodes_[i + 1]);
-                    return &(nodes_[i]);
+                    if (i + 1 != skip_) return nodes_[i + 1];
+                    return nodes_[i];
                 }
             }
         }
@@ -177,21 +203,21 @@ public:
         //std::shared_ptr<DataNode> ret = nodes_[skip_ - 1];
         for (int16_t i = skip_ - 1; 0 <= i; --i)
         {
-            if (key >= nodes_[i].key_) return &(nodes_[i]);
+            if (key >= nodes_[i]->key_) return nodes_[i];
         }
         return nullptr;
     }
 
     DataNode* Get(uint8_t pos)
     {
-        if (pos < skip_) return &(nodes_[pos]);
+        if (pos < skip_) return nodes_[pos];
         return nullptr;
     }
 
 protected:
     //std::unique_ptr<KeyType[]> keys_ {nullptr};
     uint8_t skip_{0};
-    std::unique_ptr<DataNode[]> nodes_ {nullptr};
+    std::unique_ptr<DataNode*[]> nodes_ {nullptr};
 };
 
 class ProxyLane
@@ -200,33 +226,31 @@ public:
     ProxyLane(uint32_t slot_num, uint8_t skip)
             :slot_num_(slot_num)
             ,skip_(skip)
-            ,nodes_(new std::unique_ptr<ProxyNode>[slot_num_]())
+            ,nodes_(new ProxyNode[slot_num_])
     {
-        std::fill_n(nodes_.get(), slot_num, nullptr);
+        //std::fill_n(nodes_.get(), slot_num, nullptr);
+        for (decltype(slot_num_) i = 0; i != slot_num_; ++i) nodes_[i].Init(skip_);
     }
 
     void Resize(uint32_t slot_num)
     {
         auto old_slot_num = slot_num_;
         slot_num_ = slot_num;
-        auto new_nodes = std::make_unique<std::unique_ptr<ProxyNode>[]>(slot_num_);
-        std::fill_n(new_nodes.get(), slot_num, nullptr);
+        auto new_nodes = std::make_unique<ProxyNode[]>(slot_num_);
         for (decltype(old_slot_num) i = 0; i != old_slot_num; ++i) new_nodes[i] = std::move(nodes_[i]);
+        for (decltype(slot_num_) i = old_slot_num; i != slot_num_; ++i) new_nodes[i].Init(skip_);
         nodes_ = std::move(new_nodes);
     }
 
     DataNode* Set(uint32_t pos, DataNode*& data)
     {
-        nodes_[pos].reset(new ProxyNode(data, skip_));
-        return &(nodes_[pos]->nodes_[0]);
+        nodes_[pos] = ProxyNode(data, skip_);
+        return nodes_[pos].nodes_[0];
     }
 
     DataNode* Add(uint32_t start, DataNode*& data)
     {
-        std::unique_ptr<ProxyNode>& proxy_node = nodes_[start];
-        assert(proxy_node);
-        if (proxy_node) return proxy_node->Add(data);
-        return nullptr;
+        return nodes_[start].Add(data);
     }
 
     friend inline std::ostream& operator << (std::ostream& os, ProxyLane& proxy_lane)
@@ -237,8 +261,8 @@ public:
 
         for (decltype(proxy_lane.slot_num_) i = 0; i != proxy_lane.slot_num_; ++i)
         {
-            if (proxy_lane.nodes_[i]) os << *(proxy_lane.nodes_[i]);
-            else os << "na";
+            /*if (proxy_lane.nodes_[i])*/ os << proxy_lane.nodes_[i];
+            //else os << "na";
             os << "|";
         }
         return os;
@@ -246,20 +270,17 @@ public:
 
     auto Search(uint32_t pos, KeyType key)
     {
-        return nodes_[pos]->Search(key);
+        return nodes_[pos].Search(key);
     }
 
     DataNode* SearchLt(uint32_t pos, KeyType key)
     {
-        auto ret = nodes_[pos]->SearchLt(key);
+        auto ret = nodes_[pos].SearchLt(key);
         if (ret)
         {
             if (ret->key() == key)
             {
-                if (pos + 1 < slot_num_)
-                {
-                    ret = nodes_[pos + 1]->Get(0);
-                }
+                if (pos + 1 < slot_num_) ret = nodes_[pos + 1].Get(0);
                 else return nullptr;
             }
         }
@@ -268,18 +289,15 @@ public:
 
     DataNode* SearchGt(uint32_t pos, KeyType key)
     {
-        auto ret = nodes_[pos]->SearchGt(key);
-        if (!ret)
-        {
-            ret = nodes_[0]->Get(0);
-        }
+        auto ret = nodes_[pos].SearchGt(key);
+        if (!ret) ret = nodes_[0].Get(0);
         return ret;
     }
 
 protected:
     uint32_t slot_num_{0};
     uint8_t skip_{0};
-    std::unique_ptr<std::unique_ptr<ProxyNode>[]> nodes_{nullptr};
+    std::unique_ptr<ProxyNode[]> nodes_{nullptr};
 };
 
 class Lane

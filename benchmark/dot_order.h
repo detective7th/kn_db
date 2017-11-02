@@ -40,31 +40,31 @@ template<typename T>bool fun_vector_insert(const folly::StringPiece& file_data, 
 }
 template<typename T> bool fun_vector_search(const T& con, const int64_t& search_key)
 {
-    auto res = std::find(con.begin(), con.end(), search_key);
-    if(res != con.end())
-    {
-        //std::cout <<" found";
-    }
+    std::find(con.begin(), con.end(), search_key);
+    // if(res != con.end())
+    // {
+    //     std::cout <<"nunllptr,key:"<< search_key;
+    // }
     return true;
 }
-template<>bool fun_vector_insert<SkipList>(const folly::StringPiece& file_data, SkipList& con)
-{
-    int size = file_data.size()/sizeof(Order);
-    if(size <=0 || (file_data.size() % sizeof(Order) != 0 ))
-    {
-        std::cout << "file content error;" <<std::endl;
-        return false;
-    }
-    for(int i = 0; i < size; i++)
-    {
-        Order* dot = (Order*)(file_data.start() + i*sizeof(Order));
-        auto node = std::make_shared<DataNode>((void*)dot, sizeof(Order), ((dot->trade_time_/100000000) << 32)|(dot->order_no_)); 
-        con.Insert(node);
-        //std::cout << "size :" << size << "  i:" << i <<"  dot->order_no_:"<< dot->order_no_ <<std::endl;
-    }
-    std::cout << "test over" << std::endl;
-    return true;
-}
+// template<>bool fun_vector_insert<SkipList>(const folly::StringPiece& file_data, SkipList& con)
+// {
+//     int size = file_data.size()/sizeof(Order);
+//     if(size <=0 || (file_data.size() % sizeof(Order) != 0 ))
+//     {
+//         std::cout << "file content error;" <<std::endl;
+//         return false;
+//     }
+//     for(int i = 0; i < size; i++)
+//     {
+//         Order* dot = (Order*)(file_data.start() + i*sizeof(Order));
+//         auto node = std::make_shared<DataNode>((void*)dot, sizeof(Order), ((dot->trade_time_/100000000) << 32)|(dot->order_no_)); 
+//         con.Insert(node);
+//         //std::cout << "size :" << size << "  i:" << i <<"  dot->order_no_:"<< dot->order_no_ <<std::endl;
+//     }
+//     std::cout << "test over" << std::endl;
+//     return true;
+// }
 
 template<typename T>bool fun_map_insert(const folly::StringPiece& file_data, T& con)
 {
@@ -83,10 +83,10 @@ template<typename T>bool fun_map_insert(const folly::StringPiece& file_data, T& 
 }
 template<typename T> bool fun_map_search(const T& con, const int64_t& search_key)
 {
-    auto res = con.find(search_key);
-    // if(res != con.end())
+    con.find(search_key);
+    // if(res == con.end())
     // {
-    //     //std::cout <<" found";
+    //     std::cout <<"nunllptr,key:"<< search_key;
     // }
     return true;
 }
@@ -256,6 +256,7 @@ void set_search_bench_single()
         test_skip_list.emplace(no, ptr);
         test_btree.insert(no, ptr);
     }
+    search_key = rand_count_in_vec(search_key);
     //std::reverse(search_key.begin(), search_key.end());
     std::cout<< "search key size:" << search_key.size() << std::endl;
     // addBenchmark(
@@ -325,18 +326,19 @@ void set_search_bench_single()
             std::cout << "file content error;" <<std::endl;
             return con;
         }
-        
+        uint64_t no = 0;
         for(int i = 0; i < size; i++)
         {
             //folly::StringPiece onepiece(file_data.subpiece(i*sizeof(Order), sizeof(Order)));
-            Order* dot = (Order*)(file_data.start() +sizeof(uint32_t)+ i*sizeof(Order));
-            con.emplace_back(kn::db::service::CombineHiLow<kn::db::core::KeyType, uint32_t>
-                (static_cast<uint32_t>(dot->trade_time_/1000000000)
-                 , static_cast<uint32_t>(dot->order_no_)));
+            Order* dot = (Order*)(file_data.start() + i*sizeof(Order));
+            no = kn::db::service::CombineHiLow<kn::db::core::KeyType, uint32_t>
+            (static_cast<uint32_t>(dot->trade_time_/1000000000)
+             , static_cast<uint32_t>(dot->order_no_));
+             con.emplace_back(no);
         }
         return con;
     }
-    void rand_bench_skiplist_search(int iters, kn::db::core::DataBase& base, Table* table,const std::vector<int64_t>& search_key)
+    void rand_bench_skiplist_search(int iters, Table* table,const std::vector<int64_t>& search_key)
     {
         folly::BenchmarkSuspender braces;
        
@@ -344,7 +346,11 @@ void set_search_bench_single()
             while (iters--) {
                 for(const auto& iter : search_key)
                 {
-                    table->Find(iter);  
+                    table->Find(iter);
+                    // if(!res)
+                    // {
+                    //     std::cout <<"nunllptr,key:"<< iter;
+                    // }  
                 }
                 //folly::doNotOptimizeAway(base); 
             }
@@ -353,14 +359,15 @@ void set_search_bench_single()
     void set_search_skiplist(kn::db::core::DataBase& base)
     {
         auto search_key = rand_search_key();
-        std::reverse(search_key.begin(), search_key.end());
+        search_key = rand_count_in_vec(search_key);
+        //std::reverse(search_key.begin(), search_key.end());
         std::cout<< "size:" << search_key.size() << std::endl;
         auto table = base.GetSet("orders")->GetTable("000002").get();
         addBenchmark(
             __FILE__,
             "order_skiplist_search",
-            [=,&base](int iters) {
-                rand_bench_skiplist_search(iters ,base, table, search_key);
+            [=](int iters) {
+                rand_bench_skiplist_search(iters , table, search_key);
                 return iters;
             });
     }

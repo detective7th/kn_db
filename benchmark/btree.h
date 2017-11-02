@@ -59,6 +59,7 @@ public:
   ~BTree();
 
   Value find(Key key) const;
+  Value end() const;
   typename Node::Ptr find_node(Key key) const;
   bool insert(Key key, Value val);
   void to_stream(std::ostream &stream) const;

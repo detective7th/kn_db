@@ -17,10 +17,29 @@ using namespace folly;
 int main(int argc, char** argv) {
  
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  // kn::db::core::DataBase base("test");
-  // release_skillist("/media/psf/Home/Documents/kn_db/kn_db/data",base);
-  // namedot::set_search_skiplist(base);
-  namedot::set_search_bench_single();
+  if(argc > 1 && std::string(argv[1]) == std::string("sl"))
+  {
+    uint32_t max_level = 8;
+    uint32_t skip = 4;
+    if(argc == 4)
+    {
+      max_level = atoi(argv[2]);
+      skip = atoi(argv[3]);
+    }
+    kn::db::core::DataBase base("test");
+    release_skillist("/media/psf/Home/Documents/kn_db/kn_db/data",base, max_level, skip);
+    namedot::set_search_skiplist(base);
+    runBenchmarks();
+    return 0;
+  }
+  else
+  {
+    namedot::set_search_bench_single();
+    runBenchmarks();
+    return 0;
+  }
+  
+  //namedot::set_search_bench_single();
   //template search test
   //namedot::set_rand_bench_single("/media/psf/Home/Documents/newlibinstall/test_file/1020_orders_last");
   //namedot::set_search_bench_single("/media/psf/Home/Documents/newlibinstall/test_file/1020_orders_last");
@@ -37,7 +56,7 @@ int main(int argc, char** argv) {
   //ndt::set_rand_bench_single<std::vector<int64_t>>("/media/psf/Home/Documents/newlibinstall/test_file/trans.plan");
   //ndc::set_rand_bench_single<std::vector<std::string>>("/media/psf/Home/Documents/newlibinstall/test_file/5mincan.plan", "000002");
   //nts::set_rand_bench_single<std::vector<std::string>>("/media/psf/Home/Documents/newlibinstall/test_file/timeshare.plan", "000002");
-  runBenchmarks();
+  //runBenchmarks();
   // std::vector<int> vec;
   // struct timespec time_start={0, 0},time_end={0, 0};
   // std::map<int, std::string> seq_add;

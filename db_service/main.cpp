@@ -86,7 +86,6 @@ int main(int argc, char* argv[])
                 }
                 else continue;
 
-
                 auto table = std::make_shared<kn::db::core::Table>(it->path()
                                                                    , it->path().leaf().string().c_str()
                                                                    , hash_func);

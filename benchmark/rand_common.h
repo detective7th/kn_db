@@ -151,4 +151,31 @@ bool fun_vector_binary_search(const std::vector<int64_t>& con, const int64_t& se
 {
     return std::binary_search (con.begin(), con.end(), search_key);
 }
+template<typename T> bool fun_map_search(const T& con, const int64_t& search_key)
+{
+    auto res = con.find(search_key);
+    // if(res == con.end())
+    // {
+    //     std::cout <<"nunllptr,key:"<< search_key;
+    // }
+    return true;
+}
+template<typename T, typename K> bool fun_vector_search(const T& con, const K& search_key)
+{
+    auto res = std::find(con.begin(), con.end(), search_key);
+    // if(res != con.end())
+    // {
+    //     std::cout <<"nunllptr,key:"<< search_key;
+    // }
+    return true;
+}
+template<typename T,typename K> bool fun_map_search(const T& con, const K& search_key)
+{
+    auto res = con.find(search_key);
+    if(res != con.end())
+    {
+        //std::cout <<" found";
+    }
+    return true;
+}
 #endif

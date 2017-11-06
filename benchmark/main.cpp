@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
   }
   else
   {
-    namedot::set_search_bench_single();
+    namedot::set_search_bench_single("/media/psf/Home/Documents/kn_db/kn_db/data/orders/000002");
     runBenchmarks();
     return 0;
   }

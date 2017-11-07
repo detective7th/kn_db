@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <immintrin.h>
 #include <stdint.h>
 #include <memory>
 #include <limits>
@@ -312,7 +313,7 @@ public:
             ,start_(start)
             ,level_(level)
             ,skip_(skip)
-            ,keys_(new KeyType*[slot_num_](), std::default_delete<KeyType[]>())
+            ,keys_(new KeyType*[slot_num_](), std::default_delete<KeyType*[]>())
     {
         if (0 == level_) proxy_ = std::make_unique<ProxyLane>(slot_num_, skip_);
         std::fill_n(keys_.get(), slot_num_, nullptr);

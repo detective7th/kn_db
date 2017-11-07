@@ -41,15 +41,6 @@ template<typename T>bool fun_vector_insert(const folly::StringPiece& file_data, 
     }
     return true;
 }
-template<typename T> bool fun_vector_search(const T& con, const std::string& search_key)
-{
-    const auto res = std::find(con.begin(), con.end(), search_key);
-    if(res != con.end())
-    {
-        //std::cout <<" found";
-    }
-    return true;
-}
 template<typename T>bool fun_map_insert(const folly::StringPiece& file_data, T& con)
 {
     int size = file_data.size()/sizeof(TimeShare);
@@ -62,15 +53,6 @@ template<typename T>bool fun_map_insert(const folly::StringPiece& file_data, T& 
     {
         TimeShare* dot = (TimeShare*)(file_data.start() + i*sizeof(TimeShare));
         con.emplace(kcode_id_ + std::to_string(dot->time_), dot);
-    }
-    return true;
-}
-template<typename T> bool fun_map_search(const T& con, const std::string& search_key)
-{
-    const auto res = con.find(search_key);
-    if(res != con.end())
-    {
-        //std::cout <<" found";
     }
     return true;
 }
@@ -180,35 +162,35 @@ void set_search_bench_single(const std::string& path, const std::string& id)
         __FILE__,
         "timesharing_vector_search",
         [=](int iters) {
-            rand_search_bench_com<std::vector<std::string>, std::string>(iters ,test, search_key, fun_vector_search<std::vector<std::string>>);
+            rand_search_bench_com<std::vector<std::string>, std::string>(iters ,test, search_key, fun_vector_search<std::vector<std::string>, std::string>);
             return iters;
         });
     addBenchmark(
         __FILE__,
         "timesharing_list_search",
         [=](int iters) {
-        rand_search_bench_com<std::list<std::string>, std::string>(iters ,testlist, search_key, fun_vector_search<std::list<std::string>>);
+        rand_search_bench_com<std::list<std::string>, std::string>(iters ,testlist, search_key, fun_vector_search<std::list<std::string>, std::string>);
         return iters;
         });
     addBenchmark(
         __FILE__,
         "timesharing_map_search",
         [=](int iters) {
-        rand_search_bench_com<std::map<std::string, TimeShare*>, std::string>(iters ,test_map, search_key, fun_map_search<std::map<std::string, TimeShare*>>);
+        rand_search_bench_com<std::map<std::string, TimeShare*>, std::string>(iters ,test_map, search_key, fun_map_search<std::map<std::string, TimeShare*>, std::string>);
         return iters;
         });
     addBenchmark(
         __FILE__,
         "timesharing_unordered_map_search",
         [=](int iters) {
-        rand_search_bench_com<std::unordered_map<std::string, TimeShare*>, std::string>(iters ,test_hash_map, search_key, fun_map_search<std::unordered_map<std::string, TimeShare*>>);
+        rand_search_bench_com<std::unordered_map<std::string, TimeShare*>, std::string>(iters ,test_hash_map, search_key, fun_map_search<std::unordered_map<std::string, TimeShare*>, std::string>);
         return iters;
         });
     addBenchmark(
         __FILE__,
         "timesharing_unordered_map_with_spooky_hash_search",
         [=](int iters) {
-        rand_search_bench_com<std::unordered_map<std::string, TimeShare*, spookyhask>, std::string>(iters ,spooky_hash_map, search_key, fun_map_search<std::unordered_map<std::string, TimeShare*, spookyhask>>);
+        rand_search_bench_com<std::unordered_map<std::string, TimeShare*, spookyhask>, std::string>(iters ,spooky_hash_map, search_key, fun_map_search<std::unordered_map<std::string, TimeShare*, spookyhask>, std::string>);
         return iters;
         });
 }

@@ -43,15 +43,7 @@ template<typename T>bool fun_vector_insert(const folly::StringPiece& file_data, 
     }
     return true;
 }
-template<typename T> bool fun_vector_search(const T& con, const std::string& search_key)
-{
-    auto res = std::find(con.begin(), con.end(), search_key);
-    if(res != con.end())
-    {
-        //std::cout <<" found";
-    }
-    return true;
-}
+
 template<typename T>bool fun_map_insert(const folly::StringPiece& file_data, T& con)
 {
     int size = file_data.size()/sizeof(Candle);
@@ -67,15 +59,7 @@ template<typename T>bool fun_map_insert(const folly::StringPiece& file_data, T& 
     }
     return true;
 }
-template<typename T> bool fun_map_search(const T& con, const std::string& search_key)
-{
-    auto res = con.find(search_key);
-    if(res != con.end())
-    {
-        //std::cout <<" found";
-    }
-    return true;
-}
+
 void set_rand_bench_single(const std::string& path,const std::string& id)
 {
     folly::StringPiece file_data;
@@ -181,35 +165,35 @@ void set_search_bench_single(const std::string& path, const std::string& id)
         __FILE__,
         "candle_vector_search",
         [=](int iters) {
-            rand_search_bench_com<std::vector<std::string>, std::string>(iters ,test, search_key, fun_vector_search<std::vector<std::string>>);
+            rand_search_bench_com<std::vector<std::string>, std::string>(iters ,test, search_key, fun_vector_search<std::vector<std::string>, std::string>);
             return iters;
         });
     addBenchmark(
         __FILE__,
         "candle_list_search",
         [=](int iters) {
-        rand_search_bench_com<std::list<std::string>, std::string>(iters ,testlist, search_key, fun_vector_search<std::list<std::string>>);
+        rand_search_bench_com<std::list<std::string>, std::string>(iters ,testlist, search_key, fun_vector_search<std::list<std::string>, std::string>);
         return iters;
         });
     addBenchmark(
         __FILE__,
         "candle_map_search",
         [=](int iters) {
-        rand_search_bench_com<std::map<std::string, Candle*>, std::string>(iters ,test_map, search_key, fun_map_search<std::map<std::string, Candle*>>);
+        rand_search_bench_com<std::map<std::string, Candle*>, std::string>(iters ,test_map, search_key, fun_map_search<std::map<std::string, Candle*>, std::string>);
         return iters;
         });
     addBenchmark(
         __FILE__,
         "candle_unordered_map_search",
         [=](int iters) {
-        rand_search_bench_com<std::unordered_map<std::string, Candle*>, std::string>(iters ,test_hash_map, search_key, fun_map_search<std::unordered_map<std::string, Candle*>>);
+        rand_search_bench_com<std::unordered_map<std::string, Candle*>, std::string>(iters ,test_hash_map, search_key, fun_map_search<std::unordered_map<std::string, Candle*>, std::string>);
         return iters;
         });
     addBenchmark(
         __FILE__,
         "candle_unordered_map_with_spooky_hash_search",
         [=](int iters) {
-        rand_search_bench_com<std::unordered_map<std::string, Candle*, spookyhask>, std::string>(iters ,spooky_hash_map, search_key, fun_map_search<std::unordered_map<std::string, Candle*, spookyhask>>);
+        rand_search_bench_com<std::unordered_map<std::string, Candle*, spookyhask>, std::string>(iters ,spooky_hash_map, search_key, fun_map_search<std::unordered_map<std::string, Candle*, spookyhask>, std::string>);
         return iters;
         });
 }

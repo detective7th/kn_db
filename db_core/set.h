@@ -58,7 +58,12 @@ public:
 
     std::shared_ptr<Table> GetTable(folly::StringPiece table_name)
     {
-        return tables_.find(table_name)->second;
+        auto ptr = tables_.find(table_name);
+        if(ptr != tables_.end())
+        {
+            return ptr->second;
+        }
+        return nullptr;
     }
 
     DataNodes Find(folly::StringPiece table_name, KeyType start, KeyType end)

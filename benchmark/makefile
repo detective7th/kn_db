@@ -17,7 +17,7 @@ OBJS=$(CPP_OBJ) #$(PB_OBJ)
 
 ######################debug release#########################
 #debug
-CCFLAGS=-g -O3
+CCFLAGS=-g -O0
 LIBINC=-L/usr/lib/boost/ -L/usr/local/lib/
 BINDIR=./debug
 
@@ -35,7 +35,7 @@ LIBS=-lpthread  -lfolly -lglog -lgflags -lfollybenchmark -lboost_system -lboost_
 
 #INC=-I./ -I../../ -I../../Common/ground/ground_1_0_1 -I../../Common/proto -I../../Common/include -I$(HOME)/include
 #INC = -I../../Common/boostex -I../../Common/include -I../../comm/linux-pb  -I../../comm/include
-INC=-I. -I../../kn_db/kn_db/
+INC=-I. -I../
 #±‡“Îrelease∞Ê±æ÷¥––√¸¡Ómake R=-O2
 #RELEASEFLAG=$R
 #ifndef R

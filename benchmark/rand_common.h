@@ -132,6 +132,13 @@ void release_skillist(const std::string path, kn::db::core::DataBase& base, uint
                          , static_cast<uint32_t>(o->transaction_no_));
                     };
                 }
+                else if ("one_min" == set_name)
+                {
+                    hash_func = [=](void* data, kn::db::core::Table* table){
+                        auto o = (kn::db::service::TimeShare*)data;
+                        return o->time_;
+                    };
+                }
                 else continue;
 
                 auto table = std::make_shared<kn::db::core::Table>(it->path()

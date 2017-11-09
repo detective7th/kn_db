@@ -31,7 +31,6 @@
 #include <assert.h>
 #include <unistd.h>
 #include <string.h>
-#include <immintrin.h>
 namespace kn
 {
 namespace db

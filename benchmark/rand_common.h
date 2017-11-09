@@ -11,8 +11,9 @@
 #include <algorithm>
 #include "db_core/data_base.h"
 #include "db_service/data_def.h"
-
+#include "db_core/data_base.h"
 const int kSearchCount = 1000000;
+const int kMinLimtCount = 10;
 std::vector<int64_t> rand_count()
 {
     std::vector<int64_t> vec;
@@ -39,6 +40,25 @@ std::vector<int64_t> rand_count_in_vec(const std::vector<int64_t>& data)
     {
         value = rand() % data.size();
         vec.emplace_back(data.at(value));
+    }
+    return vec;
+}
+std::vector<std::pair<int64_t,int64_t>> rand_rang_count_in_vec(const std::vector<int64_t>& data, int mutiple = 1)
+{
+    std::vector<std::pair<int64_t,int64_t>> vec;
+    if(data.empty())
+    {
+        std::cout<< "data source is empty"<< std::endl;
+        return vec;
+    }
+    srand(time(0));
+    int first = 0, second = 0;
+    int max = kSearchCount / mutiple;
+    for(int i = 0; i < max; i ++)
+    {
+        first = rand() % data.size();
+        second = rand() % (kMinLimtCount * mutiple) + 1;
+        vec.emplace_back(std::pair<int64_t,int64_t>(data.at(first), data.at(first) + second));
     }
     return vec;
 }
@@ -182,6 +202,43 @@ template<typename T,typename K> bool fun_map_search(const T& con, const K& searc
     if(res != con.end())
     {
         //std::cout <<" found";
+    }
+    return true;
+}
+void rand_bench_skiplist_range_search(int iters, kn::db::core::Table* table,const std::vector<std::pair<int64_t, int64_t>>& search_key)
+{
+    folly::BenchmarkSuspender braces;
+     braces.dismissing([&] {
+         while (iters--) {
+             for(const auto& iter : search_key)
+             {
+                 table->Find(iter.first, iter.second);
+                 // if(!res)
+                 // {
+                 //     std::cout <<"nunllptr,key:"<< iter;
+                 // }  
+             }
+             //folly::doNotOptimizeAway(base); 
+         }
+     });
+}
+template<typename T> bool fun_map_range_search(const T& con,const std::pair<int64_t, int64_t>& key)
+{
+    for(int64_t i = key.first; i < key.second; i++)
+    {
+        auto res = con.find(i);
+        if(res != con.end())
+        {
+            //std::cout <<" found";
+        }
+    }
+    return true;
+}
+bool fun_vector_binary_range_search(const std::vector<int64_t>& con, const std::pair<int64_t, int64_t>& key)
+{
+    for(int64_t i = key.first; i < key.second; i++)
+    {
+        std::binary_search (con.begin(), con.end(), i);
     }
     return true;
 }

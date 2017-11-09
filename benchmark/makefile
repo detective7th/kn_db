@@ -46,7 +46,7 @@ INC=-I. -I../
 
 
 #CCFLAGS += -c $(RELEASEFLAG) -m64 -std=c++11 -DBOOST_ALL_DYN_LINK -DBOOST_LOG_DYN_LINK -DGROUND_ENABLE_MULTI_THREAD -DGROUND_ENABLE_FILE_LOG
-CCFLAGS += -c -Wall -m64 -std=c++1z 
+CCFLAGS += -c -Wall -m64 -std=c++1z  -mavx -shared
 CCFLAGS2 = -Wall -m64 -std=c++1z  
 
 SCPP=g++ $(CCFLAGS)

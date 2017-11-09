@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <immintrin.h>
+#include<math.h>
 namespace kn
 {
 namespace db

@@ -31,6 +31,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <string.h>
+#include<math.h>
 namespace kn
 {
 namespace db
@@ -203,7 +204,13 @@ public:
         //std::shared_ptr<DataNode> ret = nodes_[skip_ - 1];
         for (int16_t i = skip_ - 1; 0 <= i; --i)
         {
-            if (key >= nodes_[i]->key_) return nodes_[i];
+            if (nodes_[i]->key_)
+            {
+                if (key >= nodes_[i]->key_)
+                {
+                    return nodes_[i];
+                }
+            }
         }
         return nullptr;
     }

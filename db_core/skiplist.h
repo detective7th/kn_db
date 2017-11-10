@@ -517,26 +517,26 @@ public:
 
     inline auto Find(KeyType start, KeyType end)
     {
+        DataNodes ret;
+
         auto cur_pos = lanes_[max_level_ - 1].BinarySearch(start);
         auto r_pos = GetProxyLaneRelPos(cur_pos, start);
-
-        DataNodes ret;
         ret.start_ = lanes_[0].SearchProxyLaneGt(r_pos, start);
 
-        __m256 avx_sreg = _mm256_castsi256_ps(_mm256_set1_epi32(end));
+        //__m256 avx_sreg = _mm256_castsi256_ps(_mm256_set1_epi32(end));
 
-        //r_pos = cur_pos - lanes_[0].start_;
-        uint32_t elements_in_lane = lanes_[0].elements_ - SIMD_SEGMENTS;
-        while (r_pos < elements_in_lane)
-        {
-            __m256 avx_creg = _mm256_castsi256_ps(
-                _mm256_loadu_si256((__m256i const*) &(lanes_[0].keys_[r_pos])));
-            __m256 res = _mm256_cmp_ps(avx_sreg, avx_creg, 30);
-            uint32_t bitmask = _mm256_movemask_ps(res);
-            if (bitmask < 0xff) break;
-            cur_pos += SIMD_SEGMENTS; r_pos += SIMD_SEGMENTS;
-            //ret.count_ += (SIMD_SEGMENTS * skip_);
-        }
+        ////r_pos = cur_pos - lanes_[0].start_;
+                     //uint32_t elements_in_lane = lanes_[0].elements_ - SIMD_SEGMENTS;
+        //while (r_pos < elements_in_lane)
+        //{
+        //    __m256 avx_creg = _mm256_castsi256_ps(
+        //        _mm256_loadu_si256((__m256i const*) &(lanes_[0].keys_[r_pos])));
+        //    __m256 res = _mm256_cmp_ps(avx_sreg, avx_creg, 30);
+        //    uint32_t bitmask = _mm256_movemask_ps(res);
+        //    if (bitmask < 0xff) break;
+        //    cur_pos += SIMD_SEGMENTS; r_pos += SIMD_SEGMENTS;
+        //    //ret.count_ += (SIMD_SEGMENTS * skip_);
+                     //}
 
         cur_pos = lanes_[max_level_ - 1].BinarySearch(end);
         r_pos = GetProxyLaneRelPos(cur_pos, end);

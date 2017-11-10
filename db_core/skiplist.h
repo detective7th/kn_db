@@ -303,6 +303,8 @@ public:
         return ret;
     }
 
+    size_t total_memory() { return slot_num_ * skip_ * (sizeof(DataNode) - sizeof(size_t)); }
+
 protected:
     uint32_t slot_num_{0};
     uint8_t skip_{0};
@@ -630,6 +632,10 @@ protected:
     }
 
     auto total_slots_size() const { return total_slots_size_; }
+    size_t total_memory() const
+    {
+        return total_slots_size_ * sizeof(KeyType) + lanes_[0].proxy_->total_memory();
+    }
 
 protected:
     uint8_t max_level_{5};
@@ -681,6 +687,7 @@ public:
     }
 
     auto total_slots_size() const { return lanes_->total_slots_size(); }
+    auto total_memory() const { return lanes_->total_memory(); }
 
 protected:
     DataNode head_node_;

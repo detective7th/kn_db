@@ -335,7 +335,8 @@ void set_search_bench_single(std::string path, int mutiple = 0)
     void set_search_skiplist(kn::db::core::DataBase& base, int mutiple = 0)
     {
         auto table = base.GetSet("orders")->GetTable("000002").get(); 
-        auto size = table->total_slots_size();       
+        auto size = table->total_memory(); 
+        std::cout << "-----size -------" << size << std::endl;      
         auto search_key = rand_search_key();
         if(mutiple == 0)
         {

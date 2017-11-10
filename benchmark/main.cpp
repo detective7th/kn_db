@@ -48,8 +48,8 @@ int main(int argc, char** argv)
     kn::db::core::DataBase base("test");
     release_skillist("/home/kid/benckmark/kn_db/data/",base, max_level, skip);
     namedot::set_search_skiplist(base, mutiple);
-    ndt::set_search_skiplist(base, mutiple);
-    nts::set_search_skiplist(base, mutiple);
+    //ndt::set_search_skiplist(base, mutiple);
+    //nts::set_search_skiplist(base, mutiple);
     sleeptimes();
     runBenchmarks();
     sleeptimes();

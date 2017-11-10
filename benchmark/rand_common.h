@@ -52,12 +52,13 @@ std::vector<std::pair<int64_t,int64_t>> rand_rang_count_in_vec(const std::vector
         return vec;
     }
     srand(time(0));
-    int first = 0, second = 0;
-    int max = kSearchCount / mutiple;
+    int first = 0, second = mutiple;
+    int max = mutiple;
     for(int i = 0; i < max; i ++)
     {
-        first = rand() % data.size();
-        second = rand() % (kMinLimtCount * mutiple) + 1;
+        //first = rand() % data.size();
+        //second = rand() % (kMinLimtCount * mutiple) + 1;
+        first = 1;
         vec.emplace_back(std::pair<int64_t,int64_t>(data.at(first), data.at(first) + second));
     }
     return vec;
@@ -212,11 +213,15 @@ void rand_bench_skiplist_range_search(int iters, kn::db::core::Table* table,cons
          while (iters--) {
              for(const auto& iter : search_key)
              {
-                 table->Find(iter.first, iter.second);
-                 // if(!res)
-                 // {
-                 //     std::cout <<"nunllptr,key:"<< iter;
-                 // }  
+                 auto res = table->Find(iter.first, iter.second);
+                 if(!res.start_)
+                 {
+                     std::cout <<"start nunllptr";
+                 }
+                if(!res.end_)
+                {
+                std::cout <<"end nunllptr";
+                } 
              }
              //folly::doNotOptimizeAway(base); 
          }

@@ -344,7 +344,7 @@ void set_search_bench_single(std::string path, int mutiple = 0)
             std::cout<< "size:" << search_key.size() << std::endl;
             addBenchmark(
                 "order_test",
-                "skiplist",
+                "kn_db",
                 [=](int iters) {
                     rand_bench_skiplist_search(iters , table, search_key);
                     return iters;
@@ -352,15 +352,15 @@ void set_search_bench_single(std::string path, int mutiple = 0)
         }
         else
         {
-            // auto search_range = rand_rang_count_in_vec(search_key, mutiple);
-            // std::cout << "order_test ,total size : "<< search_key.size() <<"|search size:" << search_range.size() <<"| range "<< mutiple * kMinLimtCount << std::endl;
-            // addBenchmark(
-            //     "order_test",
-            //     "skiplist_range",
-            //     [=](int iters) {
-            //         rand_bench_skiplist_range_search(iters , table, search_range);
-            //         return iters;
-            //     });
+            auto search_range = rand_rang_count_in_vec(search_key, mutiple);
+            std::cout << "order_test ,total size : "<< search_key.size() <<"|search size:" << search_range.size() <<"| range "<< mutiple * kMinLimtCount << std::endl;
+            addBenchmark(
+                "order_test",
+                "kn_db_range",
+                [=](int iters) {
+                    rand_bench_skiplist_range_search(iters , table, search_range);
+                    return iters;
+                });
         }
         
     }

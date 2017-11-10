@@ -11,9 +11,18 @@
 #include "dot_candle.h"
 #include "dot_timeshare.h"
 #include "db_core/data_base.h"
+#include <unistd.h>
 using namespace std;
 using namespace folly;
-
+void sleeptimes()
+{
+  // int times = 10;
+  // while(times -- )
+  // {
+  //   std::cout << "times :" << times << std::endl;
+  //   usleep(1000000);
+  // }
+}
 int main(int argc, char** argv) 
 {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -41,7 +50,9 @@ int main(int argc, char** argv)
     namedot::set_search_skiplist(base, mutiple);
     ndt::set_search_skiplist(base, mutiple);
     nts::set_search_skiplist(base, mutiple);
+    sleeptimes();
     runBenchmarks();
+    sleeptimes();
     return 0;
   }
   if(std::string(argv[1]) == std::string("order"))
@@ -61,6 +72,8 @@ int main(int argc, char** argv)
   {
     nts::set_search_bench_single("/home/kid/benckmark/kn_db/data/one_min/000002");
   }
+  sleeptimes();
   runBenchmarks();
+  sleeptimes();
   return 0;
 }

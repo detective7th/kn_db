@@ -335,7 +335,7 @@ void set_search_bench_single(const std::string& path, int mutiple = 0)
             std::cout << "tranaction_test ,total size : "<< search_key.size() << std::endl;
             addBenchmark(
                 "transaction_test",
-                "skiplist",
+                "kn_db",
                 [=](int iters) {
                     rand_bench_skiplist_search(iters , table, search_key);
                     return iters;
@@ -347,7 +347,7 @@ void set_search_bench_single(const std::string& path, int mutiple = 0)
             std::cout << "tranaction_test ,total size : "<< search_key.size()<<"|search size:" << search_range.size() <<"| range "<< mutiple * kMinLimtCount << std::endl;
             addBenchmark(
                 "transaction_test",
-                "skiplist_range",
+                "kn_db_range",
                 [=](int iters) {
                     rand_bench_skiplist_range_search(iters , table, search_range);
                     return iters;

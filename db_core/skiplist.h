@@ -32,7 +32,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <immintrin.h>
-#include<math.h>
+#include <math.h>
+
 namespace kn
 {
 namespace db
@@ -628,6 +629,8 @@ protected:
         Init(lanes_[max_level_ - 1].slot_num_ + TOP_LANE_BLOCK);
     }
 
+    auto total_slots_size() const { return total_slots_size_; }
+
 protected:
     uint8_t max_level_{5};
     uint8_t skip_{2};
@@ -676,6 +679,8 @@ public:
     {
         return lanes_->Find(start, end);
     }
+
+    auto total_slots_size() const { return lanes_->total_slots_size(); }
 
 protected:
     DataNode head_node_;

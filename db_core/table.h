@@ -77,6 +77,9 @@ public:
         return skip_list_->Find(start, end);
     }
 
+    auto total_slots_size() { return skip_list_->total_slots_size(); }
+    auto total_memory() { return skip_list_->total_memory(); }
+
 protected:
     folly::fbstring name_;
     boost::filesystem::path path_;

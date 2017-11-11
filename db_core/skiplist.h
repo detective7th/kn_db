@@ -31,6 +31,8 @@
 #include <assert.h>
 #include <unistd.h>
 #include <string.h>
+#include <immintrin.h>
+#include <math.h>
 
 namespace kn
 {
@@ -204,7 +206,13 @@ public:
         //std::shared_ptr<DataNode> ret = nodes_[skip_ - 1];
         for (int16_t i = skip_ - 1; 0 <= i; --i)
         {
-            if (key >= nodes_[i]->key_) return nodes_[i];
+            if (nodes_[i]->key_)
+            {
+                if (key >= nodes_[i]->key_)
+                {
+                    return nodes_[i];
+                }
+            }
         }
         return nullptr;
     }
@@ -294,6 +302,8 @@ public:
         if (!ret) ret = nodes_[0].Get(0);
         return ret;
     }
+
+    size_t total_memory() { return slot_num_ * skip_ * (sizeof(DataNode) - sizeof(size_t) - sizeof(void*)); }
 
 protected:
     uint32_t slot_num_{0};
@@ -511,26 +521,26 @@ public:
 
     inline auto Find(KeyType start, KeyType end)
     {
+        DataNodes ret;
+
         auto cur_pos = lanes_[max_level_ - 1].BinarySearch(start);
         auto r_pos = GetProxyLaneRelPos(cur_pos, start);
-
-        DataNodes ret;
         ret.start_ = lanes_[0].SearchProxyLaneGt(r_pos, start);
 
-        __m256 avx_sreg = _mm256_castsi256_ps(_mm256_set1_epi32(end));
+        //__m256 avx_sreg = _mm256_castsi256_ps(_mm256_set1_epi32(end));
 
-        //r_pos = cur_pos - lanes_[0].start_;
-        uint32_t elements_in_lane = lanes_[0].elements_ - SIMD_SEGMENTS;
-        while (r_pos < elements_in_lane)
-        {
-            __m256 avx_creg = _mm256_castsi256_ps(
-                _mm256_loadu_si256((__m256i const*) &(lanes_[0].keys_[r_pos])));
-            __m256 res = _mm256_cmp_ps(avx_sreg, avx_creg, 30);
-            uint32_t bitmask = _mm256_movemask_ps(res);
-            if (bitmask < 0xff) break;
-            cur_pos += SIMD_SEGMENTS; r_pos += SIMD_SEGMENTS;
-            //ret.count_ += (SIMD_SEGMENTS * skip_);
-        }
+        ////r_pos = cur_pos - lanes_[0].start_;
+                     //uint32_t elements_in_lane = lanes_[0].elements_ - SIMD_SEGMENTS;
+        //while (r_pos < elements_in_lane)
+        //{
+        //    __m256 avx_creg = _mm256_castsi256_ps(
+        //        _mm256_loadu_si256((__m256i const*) &(lanes_[0].keys_[r_pos])));
+        //    __m256 res = _mm256_cmp_ps(avx_sreg, avx_creg, 30);
+        //    uint32_t bitmask = _mm256_movemask_ps(res);
+        //    if (bitmask < 0xff) break;
+        //    cur_pos += SIMD_SEGMENTS; r_pos += SIMD_SEGMENTS;
+        //    //ret.count_ += (SIMD_SEGMENTS * skip_);
+                     //}
 
         cur_pos = lanes_[max_level_ - 1].BinarySearch(end);
         r_pos = GetProxyLaneRelPos(cur_pos, end);
@@ -621,6 +631,12 @@ protected:
         Init(lanes_[max_level_ - 1].slot_num_ + TOP_LANE_BLOCK);
     }
 
+    auto total_slots_size() const { return total_slots_size_; }
+    size_t total_memory() const
+    {
+        return total_slots_size_ * sizeof(KeyType) + lanes_[0].proxy_->total_memory();
+    }
+
 protected:
     uint8_t max_level_{5};
     uint8_t skip_{2};
@@ -669,6 +685,9 @@ public:
     {
         return lanes_->Find(start, end);
     }
+
+    auto total_slots_size() const { return lanes_->total_slots_size(); }
+    auto total_memory() const { return lanes_->total_memory(); }
 
 protected:
     DataNode head_node_;

@@ -15,9 +15,16 @@
 #include <iostream>
 #include "folly/FBString.h"
 #include "db_service/data_def.h"
+#include "db_core/data_base.h"
+#include "db_service/data_def.h"
+#include "skiplist.hpp"
+#include "btree.h"
+#include "art/radix_map.h"
+#include "stx/btree_map.h"
 namespace ndc 
 {
 using namespace folly;
+using namespace kn::db::core;
 using namespace kn::db::service;
 struct spookyhask 
 {
@@ -120,7 +127,7 @@ void set_rand_bench_single(const std::string& path,const std::string& id)
             return iters;
         });
 }
-void set_search_bench_single(const std::string& path, const std::string& id)
+void set_search_bench_single(std::string path)
 {
     folly::StringPiece file_data;
     if(!file_mapping)
@@ -144,57 +151,84 @@ void set_search_bench_single(const std::string& path, const std::string& id)
         return;
     }
     std::cout <<"file: "<<__FILE__<< "single size : " << size << std::endl;
-    std::vector<std::string> test;
-    std::list<std::string> testlist;
-    std::map<std::string, Candle*> test_map;
-    std::unordered_map<std::string, Candle*> test_hash_map;
-    std::unordered_map<std::string, Candle*, spookyhask> spooky_hash_map;
+    std::vector<int64_t> test;
+    std::list<int64_t> testlist;
+    std::map<int64_t, std::shared_ptr<DataNode>> test_map;
+    std::unordered_map<int64_t, std::shared_ptr<DataNode>> test_hash_map;
+    guoxiao::skiplist::SkipList<int64_t, std::shared_ptr<DataNode>> test_skip_list;
+    static trees::BTree<int64_t, std::shared_ptr<DataNode>> test_btree(64);
+    static art::radix_map<int64_t, std::shared_ptr<DataNode>> test_art;
+    stx::btree_map<int64_t, std::shared_ptr<DataNode>> test_bplustree;
+   // std::unordered_map<uint64_t, std::shared_ptr<DataNode>, spookyhask> spooky_hash_map;
+    uint64_t no = 0;
+    std::vector<int64_t> search_key;
     for(int i = 0; i < size; i++)
     {
         //folly::StringPiece onepiece(file_data.subpiece(i*sizeof(Candle), sizeof(Candle)));
         Candle* dot = (Candle*)(file_data.start() + i*sizeof(Candle));
-        //test.emplace(id + std::to_string(dot->open_time_), dot);
-        test.emplace_back(kcode_id_ + std::to_string(dot->open_time_));
-        testlist.emplace_back(kcode_id_ + std::to_string(dot->open_time_));
-        test_map.emplace(kcode_id_ + std::to_string(dot->open_time_), dot);
-        test_hash_map.emplace(kcode_id_ + std::to_string(dot->open_time_),dot);
-        spooky_hash_map.emplace(kcode_id_ + std::to_string(dot->open_time_),dot);
+        auto ptr = std::make_shared<DataNode>((void*)dot,sizeof(Order),no);
+        no = dot->open_time_;
+        search_key.emplace_back(no);
+        test.emplace_back(no);
+        testlist.emplace_back(no);
+        test_map.emplace(no, ptr);
+        test_hash_map.emplace(no, ptr);
+        test_skip_list.emplace(no, ptr);
+        test_btree.insert(no, ptr);
+        test_bplustree.insert(no, ptr);
+        test_art.emplace(no, ptr);
     }
-    std::vector<std::string> search_key = rand_date_17bit(id);
+    search_key = rand_count_in_vec(search_key);
+    std::cout<< "search key size:" << search_key.size() << std::endl;
+    const std::string test_name("candle_test");  
     addBenchmark(
-        __FILE__,
-        "candle_vector_search",
+        test_name.c_str(),
+        "map",
         [=](int iters) {
-            rand_search_bench_com<std::vector<std::string>, std::string>(iters ,test, search_key, fun_vector_search<std::vector<std::string>, std::string>);
+            rand_search_bench_com<std::map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_map, search_key, fun_map_search<std::map<int64_t,std::shared_ptr<DataNode>>, int64_t>);
+            return iters;
+        });    
+    addBenchmark(
+        test_name.c_str(),
+        "unordered_map",
+        [=](int iters) {
+            rand_search_bench_com<std::unordered_map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_hash_map, search_key, fun_map_search<std::unordered_map<int64_t, std::shared_ptr<DataNode>>, int64_t>);
             return iters;
         });
     addBenchmark(
-        __FILE__,
-        "candle_list_search",
+        test_name.c_str(),
+        "vector_binary",
         [=](int iters) {
-        rand_search_bench_com<std::list<std::string>, std::string>(iters ,testlist, search_key, fun_vector_search<std::list<std::string>, std::string>);
-        return iters;
+            rand_search_bench_com<std::vector<int64_t>, int64_t>(iters ,test, search_key, fun_vector_binary_search);
+            return iters;
         });
     addBenchmark(
-        __FILE__,
-        "candle_map_search",
+        test_name.c_str(),
+        "tradition_skiplist",
         [=](int iters) {
-        rand_search_bench_com<std::map<std::string, Candle*>, std::string>(iters ,test_map, search_key, fun_map_search<std::map<std::string, Candle*>, std::string>);
-        return iters;
+            rand_search_bench_com<guoxiao::skiplist::SkipList<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_skip_list, search_key, fun_map_search<guoxiao::skiplist::SkipList<int64_t,std::shared_ptr<DataNode>>, int64_t>);
+            return iters;
         });
     addBenchmark(
-        __FILE__,
-        "candle_unordered_map_search",
+        test_name.c_str(),
+        "btree",
         [=](int iters) {
-        rand_search_bench_com<std::unordered_map<std::string, Candle*>, std::string>(iters ,test_hash_map, search_key, fun_map_search<std::unordered_map<std::string, Candle*>, std::string>);
-        return iters;
+            rand_search_bench_com<trees::BTree<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_btree, search_key, fun_map_search<trees::BTree<int64_t,std::shared_ptr<DataNode>>, int64_t>);
+            return iters;
         });
     addBenchmark(
-        __FILE__,
-        "candle_unordered_map_with_spooky_hash_search",
+        test_name.c_str(),
+        "bplustree",
         [=](int iters) {
-        rand_search_bench_com<std::unordered_map<std::string, Candle*, spookyhask>, std::string>(iters ,spooky_hash_map, search_key, fun_map_search<std::unordered_map<std::string, Candle*, spookyhask>, std::string>);
-        return iters;
+            rand_search_bench_com<stx::btree_map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_bplustree, search_key, fun_map_search<stx::btree_map<int64_t,std::shared_ptr<DataNode>>, int64_t>);
+            return iters;
+        });
+    addBenchmark(
+        test_name.c_str(),
+        "art tree",
+        [=](int iters) {
+            rand_search_bench_com< art::radix_map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_art, search_key, fun_map_search< art::radix_map<int64_t,std::shared_ptr<DataNode>>, int64_t>);
+            return iters;
         });
 }
     

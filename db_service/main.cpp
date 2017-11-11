@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
                                                                    , it->path().leaf().string().c_str()
                                                                    , hash_func);
 
-                table->InitSkipList(8, 5);
+                table->InitSkipList(8, 6);
 
                 assert(base.AddTable({set_name.begin(), set_name.end()}, table));
 
@@ -100,6 +100,10 @@ int main(int argc, char* argv[])
     }
 
     auto table = base.GetSet("orders")->GetTable("000002");
+    auto tmp = table->total_memory();
+
+    std::cout << "memory(MB):" << tmp / 1024 / 1024 << std::endl;
+
     for (auto key : orders_keys)
     {
         auto data_node = table->Find(key);

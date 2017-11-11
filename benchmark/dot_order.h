@@ -174,51 +174,52 @@ void set_search_bench_single(std::string path)
     }
     search_key = rand_count_in_vec(search_key);
     //std::reverse(search_key.begin(), search_key.end());
-    std::cout<< "search key size:" << search_key.size() << std::endl;  
+    std::cout<< "search key size:" << search_key.size() << std::endl;
+    const std::string test_name("order_test");  
     addBenchmark(
-        "order_test",
+        test_name.c_str(),
         "map",
         [=](int iters) {
             rand_search_bench_com<std::map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_map, search_key, fun_map_search<std::map<int64_t,std::shared_ptr<DataNode>>, int64_t>);
             return iters;
         });    
     addBenchmark(
-        "order_test",
+        test_name.c_str(),
         "unordered_map",
         [=](int iters) {
             rand_search_bench_com<std::unordered_map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_hash_map, search_key, fun_map_search<std::unordered_map<int64_t, std::shared_ptr<DataNode>>, int64_t>);
             return iters;
         });
     addBenchmark(
-        "order_test",
+        test_name.c_str(),
         "vector_binary",
         [=](int iters) {
             rand_search_bench_com<std::vector<int64_t>, int64_t>(iters ,test, search_key, fun_vector_binary_search);
             return iters;
         });
     addBenchmark(
-        "order_test",
+        test_name.c_str(),
         "tradition_skiplist",
         [=](int iters) {
             rand_search_bench_com<guoxiao::skiplist::SkipList<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_skip_list, search_key, fun_map_search<guoxiao::skiplist::SkipList<int64_t,std::shared_ptr<DataNode>>, int64_t>);
             return iters;
         });
     addBenchmark(
-        "order_test",
+        test_name.c_str(),
         "btree",
         [=](int iters) {
             rand_search_bench_com<trees::BTree<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_btree, search_key, fun_map_search<trees::BTree<int64_t,std::shared_ptr<DataNode>>, int64_t>);
             return iters;
         });
     addBenchmark(
-        "order_test",
+        test_name.c_str(),
         "bplustree",
         [=](int iters) {
             rand_search_bench_com<stx::btree_map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_bplustree, search_key, fun_map_search<stx::btree_map<int64_t,std::shared_ptr<DataNode>>, int64_t>);
             return iters;
         });
     addBenchmark(
-        "order_test",
+        test_name.c_str(),
         "art tree",
         [=](int iters) {
             rand_search_bench_com< art::radix_map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_art, search_key, fun_map_search< art::radix_map<int64_t,std::shared_ptr<DataNode>>, int64_t>);
@@ -227,7 +228,7 @@ void set_search_bench_single(std::string path)
     } 
     std::vector<int64_t> rand_search_key()
     {
-        std::string path = "/media/psf/Home/Documents/kn_db/kn_db/data/orders/000002";
+        std::string path = "/home/kid/benckmark/kn_db/data/orders/000002";
         std::shared_ptr<folly::MemoryMapping> tmp_mapping = nullptr;
         file_mapping = std::make_shared<folly::MemoryMapping>(path.c_str());
 
@@ -275,6 +276,7 @@ void set_search_bench_single(std::string path)
     void set_search_skiplist(kn::db::core::DataBase& base)
     {
         auto search_key = rand_search_key();
+        std::cout << "order_test ,total size : "<< search_key.size() << std::endl;
         search_key = rand_count_in_vec(search_key);
         //std::reverse(search_key.begin(), search_key.end());
         std::cout<< "size:" << search_key.size() << std::endl;

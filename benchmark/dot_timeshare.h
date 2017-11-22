@@ -228,7 +228,7 @@ void set_search_bench_single(std::string path)
 }
 std::vector<int64_t> rand_search_key()
 {
-    std::string path = "/home/kid/benckmark/kn_db/data/one_min/000002";
+    std::string path = "/home/hzs/SSE/kn_db/data/one_min/000002";
     std::shared_ptr<folly::MemoryMapping> tmp_mapping = nullptr;
     file_mapping = std::make_shared<folly::MemoryMapping>(path.c_str());
 

@@ -228,7 +228,7 @@ void set_search_bench_single(std::string path)
     } 
     std::vector<int64_t> rand_search_key()
     {
-        std::string path = "/home/kid/benckmark/kn_db/data/orders/000002";
+        std::string path = "/home/hzs/SSE/kn_db/data/orders/000002";
         std::shared_ptr<folly::MemoryMapping> tmp_mapping = nullptr;
         file_mapping = std::make_shared<folly::MemoryMapping>(path.c_str());
 
@@ -258,6 +258,7 @@ void set_search_bench_single(std::string path)
     void rand_bench_skiplist_search(int iters, Table* table,const std::vector<int64_t>& search_key)
     {
         folly::BenchmarkSuspender braces;
+                    //std::cout <<"dot_order"<< iters<<std::endl;
        
         braces.dismissing([&] {
             while (iters--) {

@@ -514,6 +514,7 @@ public:
     inline auto Find(const KeyType& key)
     {
         //cur_pos is abs idx
+            //std::cout << key << std::endl;
         auto cur_pos = lanes_[max_level_ - 1].BinarySearch(key);
         auto r_pos = GetProxyLaneRelPos(cur_pos, key);
         return lanes_[0].SearchProxyLane(r_pos, key);

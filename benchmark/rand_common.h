@@ -144,22 +144,22 @@ void release_skillist(const std::string path, kn::db::core::DataBase& base, uint
                          , static_cast<uint32_t>(o->order_no_));
                     };
                 }
-                // else if ("transactions" == set_name)
-                // {
-                //     hash_func = [=](void* data, kn::db::core::Table* table){
-                //         auto o = (kn::db::service::Transaction*)data;
-                //         return kn::db::service::CombineHiLow<kn::db::core::KeyType, uint32_t>
-                //         (static_cast<uint32_t>(o->trade_time_/1000000000)
-                //          , static_cast<uint32_t>(o->transaction_no_));
-                //     };
-                // }
-                // else if ("one_min" == set_name)
-                // {
-                //     hash_func = [=](void* data, kn::db::core::Table* table){
-                //         auto o = (kn::db::service::TimeShare*)data;
-                //         return o->time_;
-                //     };
-                // }
+                else if ("transactions" == set_name)
+                {
+                    hash_func = [=](void* data, kn::db::core::Table* table){
+                        auto o = (kn::db::service::Transaction*)data;
+                        return kn::db::service::CombineHiLow<kn::db::core::KeyType, uint32_t>
+                        (static_cast<uint32_t>(o->trade_time_/1000000000)
+                         , static_cast<uint32_t>(o->transaction_no_));
+                    };
+                }
+                else if ("one_min" == set_name)
+                {
+                    hash_func = [=](void* data, kn::db::core::Table* table){
+                        auto o = (kn::db::service::TimeShare*)data;
+                        return o->time_;
+                    };
+                }
                 else continue;
 
                 auto table = std::make_shared<kn::db::core::Table>(it->path()

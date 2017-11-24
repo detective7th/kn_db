@@ -17,7 +17,7 @@ OBJS=$(CPP_OBJ) #$(PB_OBJ)
 
 ######################debug release#########################
 #debug
-CCFLAGS=-g -O0
+CCFLAGS=-g -O3
 LIBINC=-L/usr/lib/boost/ -L/usr/local/lib/
 BINDIR=./debug
 

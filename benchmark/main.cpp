@@ -12,8 +12,15 @@
 #include "dot_timeshare.h"
 #include "db_core/data_base.h"
 #include <unistd.h>
+#include <gflags/gflags.h>
 using namespace std;
 using namespace folly;
+
+DEFINE_string(type, "sl", "test type");
+DEFINE_int32(max_level, 8, "max level in kn_db");
+DEFINE_int32(skip, 4, "max skip in kn_db");
+DEFINE_string(path, "/home/hzs/SSE/kn_db/data/", "data path");
+DEFINE_int32(mutiple, 0, "rang test");
 void sleeptimes()
 {
   // int times = 10;
@@ -23,54 +30,67 @@ void sleeptimes()
   //   usleep(1000000);
   // }
 }
+void release_path(const std::string& path, std::map<std::string,std::string>& all_paths)
+{
+  std::string set_name;
+  for (boost::filesystem::recursive_directory_iterator it(path);
+        it != boost::filesystem::recursive_directory_iterator(); ++it)
+  {
+    if (boost::filesystem::is_directory(*it))
+    {
+        set_name = it->path().leaf().string().c_str();
+        continue;
+    }
+    all_paths.emplace(set_name, it->path().string());
+  }
+}
 int main(int argc, char** argv) 
 {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  if(argc <= 1)
+
+ std::map<std::string,std::string> all_paths;
+  release_path(FLAGS_path, all_paths);
+  const auto res = all_paths.find(FLAGS_type);
+  std::string tmp_path;
+  if(res != all_paths.end())
   {
-    std::cout << "please input params, test_type [sl maxlevel skip] ";
-    return 0;
+    tmp_path = res->second;
   }
-  if(std::string(argv[1]) == std::string("sl"))
+  if(FLAGS_type == std::string("sl"))
   {
-    uint32_t max_level = 8;
-    uint32_t skip = 4;
-    int mutiple = 0;
-    if(argc >= 4)
+    kn::db::core::DataBase base("test");
+    release_skillist(FLAGS_path,base, FLAGS_max_level, FLAGS_skip);
+    for(const auto& iter : all_paths)
     {
-      max_level = atoi(argv[2]);
-      skip = atoi(argv[3]);
-      if(argc == 5)
+      if ("orders" == iter.first)
       {
-        mutiple = atoi(argv[4]);
+        namedot::set_search_skiplist(iter.second, base, FLAGS_mutiple);
+      }
+      else if ("transactions" == iter.first)
+      {
+        ndt::set_search_skiplist(iter.second, base, FLAGS_mutiple);
+      }
+      else if ("one_min" == iter.first)
+      {
+        nts::set_search_skiplist(iter.second, base, FLAGS_mutiple);
       }
     }
-    kn::db::core::DataBase base("test");
-    release_skillist("/home/kid/benckmark/kn_db/data/",base, max_level, skip);
-    namedot::set_search_skiplist(base, mutiple);
-    ndt::set_search_skiplist(base, mutiple);
-    nts::set_search_skiplist(base, mutiple);
     sleeptimes();
     runBenchmarks();
     sleeptimes();
     return 0;
   }
-  if(std::string(argv[1]) == std::string("order"))
+  else if(FLAGS_type  == std::string("orders"))
   {
-    namedot::set_search_bench_single("/home/kid/benckmark/kn_db/data/orders/000002");
+    namedot::set_search_bench_single(tmp_path, FLAGS_mutiple);
   }
-  else if(std::string(argv[1]) == std::string("transaction"))
+  else if(FLAGS_type == std::string("transactions"))
   {
-    int mutiple = 0;
-    if(argc == 3)
-    {
-      mutiple = atoi(argv[2]);
-    }
-    ndt::set_search_bench_single("/home/kid/benckmark/kn_db/data/transactions/000002", mutiple);
+    ndt::set_search_bench_single(tmp_path, FLAGS_mutiple);
   }
-  else if(std::string(argv[1]) == std::string("timeshare"))
+  else if(FLAGS_type == std::string("one_min"))
   {
-    nts::set_search_bench_single("/home/kid/benckmark/kn_db/data/one_min/000002");
+    nts::set_search_bench_single(tmp_path, FLAGS_mutiple);
   }
   sleeptimes();
   runBenchmarks();

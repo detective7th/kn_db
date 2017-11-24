@@ -120,7 +120,7 @@ void set_rand_bench_single(const std::string& path)
             return iters;
         });
 }
-void set_search_bench_single(std::string path, int mutiple = 0)
+void set_search_bench_single(std::string path,int mutiple = 0)
 {
     folly::StringPiece file_data;
     if(!file_mapping)
@@ -285,9 +285,9 @@ void set_search_bench_single(std::string path, int mutiple = 0)
     }  
        
     } 
-    std::vector<int64_t> rand_search_key()
+    std::vector<int64_t> rand_search_key(const std::string& path)
     {
-        std::string path = "/home/kid/benckmark/kn_db/data/orders/000002";
+        //std::string path = "/home/hzs/SSE/kn_db/data/orders/000002";
         std::shared_ptr<folly::MemoryMapping> tmp_mapping = nullptr;
         file_mapping = std::make_shared<folly::MemoryMapping>(path.c_str());
 
@@ -317,6 +317,7 @@ void set_search_bench_single(std::string path, int mutiple = 0)
     void rand_bench_skiplist_search(int iters, Table* table,const std::vector<int64_t>& search_key)
     {
         folly::BenchmarkSuspender braces;
+                    //std::cout <<"dot_order"<< iters<<std::endl;
        
         braces.dismissing([&] {
             while (iters--) {
@@ -332,12 +333,12 @@ void set_search_bench_single(std::string path, int mutiple = 0)
             }
         });
     }
-    void set_search_skiplist(kn::db::core::DataBase& base, int mutiple = 0)
+    void set_search_skiplist(const std::string& path, kn::db::core::DataBase& base,int mutiple = 0)
     {
         auto table = base.GetSet("orders")->GetTable("000002").get(); 
         auto size = table->total_memory(); 
         std::cout << "-----size -------" << size << std::endl;      
-        auto search_key = rand_search_key();
+        auto search_key = rand_search_key(path);
         if(mutiple == 0)
         {
             search_key = rand_count_in_vec(search_key);

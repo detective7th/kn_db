@@ -241,41 +241,41 @@ void set_search_bench_single(const std::string& path,int mutiple = 0)
                 rand_search_bench_com<std::unordered_map<int64_t, std::shared_ptr<DataNode>>, std::pair<int64_t,int64_t>>(iters ,test_hash_map, search_range, fun_map_range_search<std::unordered_map<int64_t, std::shared_ptr<DataNode>>>);
                 return iters;
             });
-            addBenchmark(
-                test_name.c_str(),
-                "vector_binary",
-                [=](int iters) {
-                    rand_search_bench_com<std::vector<int64_t>, std::pair<int64_t,int64_t>>(iters ,test, search_range, fun_vector_binary_range_search);
-                    return iters;
-                });
-            addBenchmark(
-                test_name.c_str(),
-                "tradition_skiplist",
-                [=](int iters) {
-                    rand_search_bench_com<guoxiao::skiplist::SkipList<int64_t, std::shared_ptr<DataNode>>, std::pair<int64_t,int64_t>>(iters ,test_skip_list_trans, search_range, fun_map_range_search<guoxiao::skiplist::SkipList<int64_t,std::shared_ptr<DataNode>>>);
-                    return iters;
-                });
-            addBenchmark(
-                test_name.c_str(),
-                "btree",
-                [=](int iters) {
-                    rand_search_bench_com<trees::BTree<int64_t, std::shared_ptr<DataNode>>, std::pair<int64_t,int64_t>>(iters ,test_btree_trans, search_range, fun_map_range_search<trees::BTree<int64_t,std::shared_ptr<DataNode>>>);
-                    return iters;
-                });
-            addBenchmark(
-                test_name.c_str(),
-                "bplustree",
-                [=](int iters) {
-                    rand_search_bench_com<stx::btree_map<int64_t, std::shared_ptr<DataNode>>, std::pair<int64_t,int64_t>>(iters ,test_bplustree, search_range, fun_map_range_search<stx::btree_map<int64_t,std::shared_ptr<DataNode>>>);
-                    return iters;
-                });
-            addBenchmark(
-                test_name.c_str(),
-                "art tree",
-                [=](int iters) {
-                    rand_search_bench_com< art::radix_map<int64_t, std::shared_ptr<DataNode>>, std::pair<int64_t,int64_t>>(iters ,test_art_trans, search_range, fun_map_range_search< art::radix_map<int64_t,std::shared_ptr<DataNode>>>);
-                    return iters;
-                });
+        addBenchmark(
+            test_name.c_str(),
+            "vector_binary",
+            [=](int iters) {
+                rand_search_bench_com<std::vector<int64_t>, std::pair<int64_t,int64_t>>(iters ,test, search_range, fun_vector_binary_range_search);
+                return iters;
+            });
+        addBenchmark(
+            test_name.c_str(),
+            "tradition_skiplist",
+            [=](int iters) {
+                rand_search_bench_com<guoxiao::skiplist::SkipList<int64_t, std::shared_ptr<DataNode>>, std::pair<int64_t,int64_t>>(iters ,test_skip_list_trans, search_range, fun_map_range_search<guoxiao::skiplist::SkipList<int64_t,std::shared_ptr<DataNode>>>);
+                return iters;
+            });
+        addBenchmark(
+            test_name.c_str(),
+            "btree",
+            [=](int iters) {
+                rand_search_bench_com<trees::BTree<int64_t, std::shared_ptr<DataNode>>, std::pair<int64_t,int64_t>>(iters ,test_btree_trans, search_range, fun_map_range_search<trees::BTree<int64_t,std::shared_ptr<DataNode>>>);
+                return iters;
+            });
+        addBenchmark(
+            test_name.c_str(),
+            "bplustree",
+            [=](int iters) {
+                rand_search_bench_com<stx::btree_map<int64_t, std::shared_ptr<DataNode>>, std::pair<int64_t,int64_t>>(iters ,test_bplustree, search_range, fun_map_range_search<stx::btree_map<int64_t,std::shared_ptr<DataNode>>>);
+                return iters;
+            });
+        addBenchmark(
+            test_name.c_str(),
+            "art tree",
+            [=](int iters) {
+                rand_search_bench_com< art::radix_map<int64_t, std::shared_ptr<DataNode>>, std::pair<int64_t,int64_t>>(iters ,test_art_trans, search_range, fun_map_range_search< art::radix_map<int64_t,std::shared_ptr<DataNode>>>);
+                return iters;
+            });
     }   
 }
     std::vector<int64_t> rand_search_key(const std::string& path)
@@ -287,7 +287,7 @@ void set_search_bench_single(const std::string& path,int mutiple = 0)
         folly::StringPiece file_data;
         file_data = file_mapping->data();
         file_data = file_data.subpiece(sizeof(uint32_t));
-        
+
         int size = file_data.size()/sizeof(Transaction);
         std::vector<int64_t> con;
         if(size <=0 || (file_data.size()% sizeof(Transaction) != 0 ))
@@ -318,9 +318,9 @@ void set_search_bench_single(const std::string& path,int mutiple = 0)
                     // if(!res)
                     // {
                     //     std::cout <<"nunllptr,key:"<< iter;
-                    // }  
+                    // }
                 }
-                //folly::doNotOptimizeAway(base); 
+                //folly::doNotOptimizeAway(base);
             }
         });
     }

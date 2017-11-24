@@ -19,7 +19,7 @@
 #include "btree.h"
 #include "art/radix_map.h"
 #include "stx/btree_map.h"
-namespace namedot 
+namespace namedot
 {
 using namespace folly;
 using namespace kn::db::core;
@@ -51,7 +51,7 @@ template<typename T>bool fun_vector_insert(const folly::StringPiece& file_data, 
 //     for(int i = 0; i < size; i++)
 //     {
 //         Order* dot = (Order*)(file_data.start() + i*sizeof(Order));
-//         auto node = std::make_shared<DataNode>((void*)dot, sizeof(Order), ((dot->trade_time_/100000000) << 32)|(dot->order_no_)); 
+//         auto node = std::make_shared<DataNode>((void*)dot, sizeof(Order), ((dot->trade_time_/100000000) << 32)|(dot->order_no_));
 //         con.Insert(node);
 //         //std::cout << "size :" << size << "  i:" << i <<"  dot->order_no_:"<< dot->order_no_ <<std::endl;
 //     }
@@ -294,7 +294,7 @@ void set_search_bench_single(std::string path,int mutiple = 0)
         folly::StringPiece file_data;
         file_data = file_mapping->data();
         file_data = file_data.subpiece(sizeof(uint32_t));
-        
+
         int size = file_data.size()/sizeof(Order);
         std::vector<int64_t> con;
         if(size <=0 || (file_data.size()% sizeof(Order) != 0 ))
@@ -327,9 +327,9 @@ void set_search_bench_single(std::string path,int mutiple = 0)
                     // if(!res)
                     // {
                     //     std::cout <<"nunllptr,key:"<< iter;
-                    // }  
+                    // }
                 }
-                //folly::doNotOptimizeAway(base); 
+                //folly::doNotOptimizeAway(base);
             }
         });
     }

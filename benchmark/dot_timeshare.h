@@ -17,13 +17,13 @@
 #include "btree.h"
 #include "art/radix_map.h"
 #include "stx/btree_map.h"
-namespace nts 
+namespace nts
 {
 const int kSecurityCodeLength = 6;
 using namespace folly;
 using namespace kn::db::core;
 using namespace kn::db::service;
-struct spookyhask 
+struct spookyhask
 {
     size_t operator()(const std::string &key) const
     {
@@ -294,7 +294,7 @@ std::vector<int64_t> rand_search_key(const std::string& path)
     folly::StringPiece file_data;
     file_data = file_mapping->data();
     file_data = file_data.subpiece(sizeof(uint32_t));
-    
+
     int size = file_data.size()/sizeof(Order);
     std::vector<int64_t> con;
     if(size <=0 || (file_data.size()% sizeof(Order) != 0 ))
@@ -315,7 +315,7 @@ std::vector<int64_t> rand_search_key(const std::string& path)
 void rand_bench_skiplist_search(int iters, Table* table,const std::vector<int64_t>& search_key)
 {
     folly::BenchmarkSuspender braces;
-   
+
     braces.dismissing([&] {
         while (iters--) {
             for(const auto& iter : search_key)
@@ -324,9 +324,9 @@ void rand_bench_skiplist_search(int iters, Table* table,const std::vector<int64_
                 // if(!res)
                 // {
                 //     std::cout <<"nunllptr,key:"<< iter;
-                // }  
+                // }
             }
-            //folly::doNotOptimizeAway(base); 
+            //folly::doNotOptimizeAway(base);
         }
     });
 }

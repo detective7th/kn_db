@@ -150,8 +150,8 @@ public:
             if (!nodes_[pos_add]) break;
             if (nodes_[pos_add]->key_ == node->key_)
             {
-                //std::cerr << "proxy lane key collision" << std::endl;
-                //return false;
+                std::cerr << "proxy lane key collision" << std::endl;
+                return nullptr;
             }
         }
         if (skip_ == pos_add)

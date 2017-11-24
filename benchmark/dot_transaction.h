@@ -168,7 +168,7 @@ void set_search_bench_single(const std::string& path)
     //             return iters;
     //         });
     search_key = rand_count_in_vec(search_key);
-    std::cout<< "search key size:" << search_key.size() << std::endl;  
+    std::cout<< "search key size:" << search_key.size() << std::endl;
     const std::string test_name("transaction_test");
     addBenchmark(
         test_name.c_str(),
@@ -176,7 +176,7 @@ void set_search_bench_single(const std::string& path)
         [=](int iters) {
             rand_search_bench_com<std::map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_map, search_key, fun_map_search<std::map<int64_t, std::shared_ptr<DataNode>>,int64_t>);
             return iters;
-        });    
+        });
     addBenchmark(
         test_name.c_str(),
         "unordered_map",
@@ -218,18 +218,18 @@ void set_search_bench_single(const std::string& path)
             [=](int iters) {
                 rand_search_bench_com< art::radix_map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_art_trans, search_key, fun_map_search< art::radix_map<int64_t,std::shared_ptr<DataNode>>, int64_t>);
                 return iters;
-            });    
+            });
     }
     std::vector<int64_t> rand_search_key()
     {
-        std::string path = "/home/hzs/SSE/kn_db/data/transactions/000002";
+        std::string path = "/home/kid/workspace/kn_db/debug/data/transactions/000002";
         std::shared_ptr<folly::MemoryMapping> tmp_mapping = nullptr;
         file_mapping = std::make_shared<folly::MemoryMapping>(path.c_str());
 
         folly::StringPiece file_data;
         file_data = file_mapping->data();
         file_data = file_data.subpiece(sizeof(uint32_t));
-        
+
         int size = file_data.size()/sizeof(Transaction);
         std::vector<int64_t> con;
         if(size <=0 || (file_data.size()% sizeof(Transaction) != 0 ))
@@ -253,7 +253,7 @@ void set_search_bench_single(const std::string& path)
     {
                     std::cout <<"nunllptr,key:"<< iters<<std::endl;
         folly::BenchmarkSuspender braces;
-       
+
         braces.dismissing([&] {
             while (iters--) {
                     std::cout <<"nunllptr,key:"<< iters<<std::endl;
@@ -263,9 +263,9 @@ void set_search_bench_single(const std::string& path)
                     // if(!res)
                     // {
                     //     std::cout <<"nunllptr,key:"<< iter;
-                    // }  
+                    // }
                 }
-                //folly::doNotOptimizeAway(base); 
+                //folly::doNotOptimizeAway(base);
                     std::cout <<"nunllptr,key:"<< iters<<std::endl;
             }
         });
@@ -285,6 +285,6 @@ void set_search_bench_single(const std::string& path)
                 rand_bench_skiplist_search(iters , table, search_key);
                 return iters;
             });
-    } 
+    }
 }// namespace ndt
 #endif

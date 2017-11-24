@@ -19,7 +19,7 @@
 #include "btree.h"
 #include "art/radix_map.h"
 #include "stx/btree_map.h"
-namespace namedot 
+namespace namedot
 {
 using namespace folly;
 using namespace kn::db::core;
@@ -51,7 +51,7 @@ template<typename T>bool fun_vector_insert(const folly::StringPiece& file_data, 
 //     for(int i = 0; i < size; i++)
 //     {
 //         Order* dot = (Order*)(file_data.start() + i*sizeof(Order));
-//         auto node = std::make_shared<DataNode>((void*)dot, sizeof(Order), ((dot->trade_time_/100000000) << 32)|(dot->order_no_)); 
+//         auto node = std::make_shared<DataNode>((void*)dot, sizeof(Order), ((dot->trade_time_/100000000) << 32)|(dot->order_no_));
 //         con.Insert(node);
 //         //std::cout << "size :" << size << "  i:" << i <<"  dot->order_no_:"<< dot->order_no_ <<std::endl;
 //     }
@@ -175,14 +175,14 @@ void set_search_bench_single(std::string path)
     search_key = rand_count_in_vec(search_key);
     //std::reverse(search_key.begin(), search_key.end());
     std::cout<< "search key size:" << search_key.size() << std::endl;
-    const std::string test_name("order_test");  
+    const std::string test_name("order_test");
     addBenchmark(
         test_name.c_str(),
         "map",
         [=](int iters) {
             rand_search_bench_com<std::map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_map, search_key, fun_map_search<std::map<int64_t,std::shared_ptr<DataNode>>, int64_t>);
             return iters;
-        });    
+        });
     addBenchmark(
         test_name.c_str(),
         "unordered_map",
@@ -224,18 +224,18 @@ void set_search_bench_single(std::string path)
         [=](int iters) {
             rand_search_bench_com< art::radix_map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_art, search_key, fun_map_search< art::radix_map<int64_t,std::shared_ptr<DataNode>>, int64_t>);
             return iters;
-        });     
-    } 
+        });
+    }
     std::vector<int64_t> rand_search_key()
     {
-        std::string path = "/home/hzs/SSE/kn_db/data/orders/000002";
+        std::string path = "/home/kid/workspace/kn_db/debug/data/orders/000002";
         std::shared_ptr<folly::MemoryMapping> tmp_mapping = nullptr;
         file_mapping = std::make_shared<folly::MemoryMapping>(path.c_str());
 
         folly::StringPiece file_data;
         file_data = file_mapping->data();
         file_data = file_data.subpiece(sizeof(uint32_t));
-        
+
         int size = file_data.size()/sizeof(Order);
         std::vector<int64_t> con;
         if(size <=0 || (file_data.size()% sizeof(Order) != 0 ))
@@ -259,7 +259,7 @@ void set_search_bench_single(std::string path)
     {
         folly::BenchmarkSuspender braces;
                     //std::cout <<"dot_order"<< iters<<std::endl;
-       
+
         braces.dismissing([&] {
             while (iters--) {
                 for(const auto& iter : search_key)
@@ -268,9 +268,9 @@ void set_search_bench_single(std::string path)
                     // if(!res)
                     // {
                     //     std::cout <<"nunllptr,key:"<< iter;
-                    // }  
+                    // }
                 }
-                //folly::doNotOptimizeAway(base); 
+                //folly::doNotOptimizeAway(base);
             }
         });
     }

@@ -31,7 +31,6 @@
 #include <assert.h>
 #include <unistd.h>
 #include <string.h>
-#include <immintrin.h>
 #include <math.h>
 
 namespace kn
@@ -145,14 +144,20 @@ public:
     DataNode* Add(DataNode*& node)
     {
         decltype(skip_) pos_add = 0;
+        if (node->key_ == 85900655892627062)
+        {
+            int i = 0;
+            ++i;
+        }
         for (;pos_add != skip_; ++pos_add)
         {
             if (!nodes_[pos_add]) break;
-            if (nodes_[pos_add]->key_ == node->key_)
-            {
-                //std::cerr << "proxy lane key collision" << std::endl;
-                //return false;
-            }
+            assert(!(nodes_[pos_add]->key_ == node->key_));
+            //if (nodes_[pos_add]->key_ == node->key_)
+            //{
+            //    std::cerr << "proxy lane key collision" << std::endl;
+            //    return nullptr;
+            //}
         }
         if (skip_ == pos_add)
         {
@@ -325,7 +330,7 @@ public:
             ,skip_(skip)
             ,keys_(new KeyType*[slot_num_](), std::default_delete<KeyType*[]>())
     {
-        if (0 == level_) proxy_ = std::make_unique<ProxyLane>(slot_num_, skip_);
+        0 == level_ ? proxy_ = std::make_unique<ProxyLane>(slot_num_, skip_) : proxy_ = nullptr;
         std::fill_n(keys_.get(), slot_num_, nullptr);
     }
 
@@ -337,7 +342,7 @@ public:
         start_ = start;
         level_ = level;
         skip_ = skip;
-        if (0 == level_) proxy_ = std::make_unique<ProxyLane>(slot_num_, skip_);
+        0 == level_ ? proxy_ = std::make_unique<ProxyLane>(slot_num_, skip_) : proxy_ = nullptr;
         keys_ = std::unique_ptr<KeyType*[]>(new KeyType*[slot_num_](), std::default_delete<KeyType*[]>());
     }
 
@@ -363,9 +368,13 @@ public:
 
         for (decltype(lane.slot_num_) i = 0; i != lane.slot_num_; ++i)
         {
-            if (!lane.keys_[i]) os << "na";
-            else if (std::numeric_limits<KeyType>::max() == *(lane.keys_[i])) os << "na";
-            else os << *(lane.keys_[i]);
+            if (i >= lane.elements_) os << "na";
+            else
+            {
+                if (!lane.keys_[i]) os << "na";
+                else if (std::numeric_limits<KeyType>::max() == *(lane.keys_[i])) os << "na";
+                else os << *(lane.keys_[i]);
+            }
             os << "|";
         }
         if (lane.proxy_) os << std::endl << *(lane.proxy_);
@@ -401,6 +410,7 @@ public:
 
     inline auto BinarySearch(const uint32_t& key)
     {
+        assert(elements_);
         uint32_t cur_pos = 0;
         uint32_t first = 0;
         uint32_t last = elements_ - 1;
@@ -566,15 +576,18 @@ protected:
 
         std::unique_ptr<KeyType[]> old_slot_nums = std::make_unique<KeyType[]>(max_level_);
         std::unique_ptr<uint32_t[]> old_starts = std::make_unique<uint32_t[]>(max_level_);
+        std::unique_ptr<uint32_t[]> old_elements = std::make_unique<uint32_t[]>(max_level_);
         for (int8_t level = max_level_ - 1; 0 <= level; --level)
         {
             old_slot_nums[level] = lanes_[level].slot_num_;
             old_starts[level] = lanes_[level].start_;
+            old_elements[level] = lanes_[level].elements_;
         }
 
         total_slots_size_ = top_lane_block;
 
-        lanes_[max_level_ - 1].Init(total_slots_size_, 0, max_level_ - 1, skip_);
+        if (keys_ && old_total_slots_size) lanes_[max_level_ - 1].Resize(total_slots_size_, 0);
+        else lanes_[max_level_ - 1].Init(total_slots_size_, 0, max_level_ - 1, skip_);
         for (int8_t level = max_level_ - 2; 0 <= level; --level)
         {
             auto& next_lane = lanes_[level + 1];
@@ -630,6 +643,7 @@ protected:
     void ResizeLanes()
     {
         Init(lanes_[max_level_ - 1].slot_num_ + TOP_LANE_BLOCK);
+        std::cout << lanes_[max_level_ - 1] << std::endl;
     }
 
     auto total_slots_size() const { return total_slots_size_; }

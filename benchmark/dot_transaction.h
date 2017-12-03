@@ -251,12 +251,12 @@ void set_search_bench_single(const std::string& path)
     }
     void rand_bench_skiplist_search(int iters, Table* table,const std::vector<int64_t>& search_key)
     {
-                    std::cout <<"nunllptr,key:"<< iters<<std::endl;
+                    //std::cout <<"nunllptr,key:"<< iters<<std::endl;
         folly::BenchmarkSuspender braces;
        
         braces.dismissing([&] {
             while (iters--) {
-                    std::cout <<"nunllptr,key:"<< iters<<std::endl;
+                    //std::cout <<"nunllptr,key:"<< iters<<std::endl;
                 for(const auto& iter : search_key)
                 {
                     table->Find(iter);
@@ -266,7 +266,7 @@ void set_search_bench_single(const std::string& path)
                     // }  
                 }
                 //folly::doNotOptimizeAway(base); 
-                    std::cout <<"nunllptr,key:"<< iters<<std::endl;
+                   // std::cout <<"nunllptr,key:"<< iters<<std::endl;
             }
         });
     }
@@ -283,6 +283,7 @@ void set_search_bench_single(const std::string& path)
             "skiplist",
             [=](int iters) {
                 rand_bench_skiplist_search(iters , table, search_key);
+//		std::cout<<iters<<std::endl;
                 return iters;
             });
     } 

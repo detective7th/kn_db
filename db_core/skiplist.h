@@ -33,6 +33,8 @@
 #include <string.h>
 #include <immintrin.h>
 #include <math.h>
+//#include "hashtable.h"
+#define SHA_DIGEST_LENGTH 64
 
 namespace kn
 {
@@ -81,6 +83,9 @@ public:
     size_t data_len_{0};
     KeyType key_ {std::numeric_limits<KeyType>::min()};
     DataNode* next_ {nullptr};
+    DataNode* previous_ {nullptr};
+    DataNode* hashnext_ {nullptr};
+
 };
 
 struct DataNodes
@@ -499,6 +504,9 @@ public:
             p.second = lanes_[0].InsertIntoProxy(new_node);
             if (!p.second) return nullptr;
         }
+	//add the info for hash table. Insert the element into hash table
+//	inserthash(table, p.first, p.second);
+	
 
         ++total_elements_;
 
@@ -514,8 +522,15 @@ public:
     inline auto Find(const KeyType& key)
     {
         //cur_pos is abs idx
-            //std::cout << key << std::endl;
-        auto cur_pos = lanes_[max_level_ - 1].BinarySearch(key);
+    //        std::cout << sizeof(key) << std::endl;
+    ///*
+    uint64_t *data64;
+    uint64_t total4;
+    total4 = 0;
+    data64 = (uint64_t *) &key;
+    total4 = _mm_crc32_u64 (total4, *data64);
+ //       */
+	auto cur_pos = lanes_[max_level_ - 1].BinarySearch(key);
         auto r_pos = GetProxyLaneRelPos(cur_pos, key);
         return lanes_[0].SearchProxyLane(r_pos, key);
     }
@@ -646,6 +661,147 @@ protected:
     std::unique_ptr<KeyType[]> keys_ {nullptr};
     std::unique_ptr<Lane[]> lanes_{nullptr};
 };
+typedef struct list {
+    DataNode *head {nullptr};
+    DataNode *tail {nullptr};
+} list;
+class HashTable
+{
+    friend class SkipList;
+public:
+	HashTable(int size){
+		size_=size;
+		table = (list **)malloc(sizeof (list) * size);
+		int i;
+		for (i = 0; i < size; i++) {
+			table[i] = listinit();
+		}
+	}
+
+// functions
+list *listinit()
+{
+    list *newlist;
+    newlist = (list*)malloc(sizeof (list));
+    DataNode *sentinel;
+    sentinel = (DataNode*)malloc(sizeof (DataNode));
+
+    sentinel->key_ = '\0';
+    sentinel->data_ = '\0';
+    sentinel->hashnext_ = sentinel;
+    sentinel->previous_ = sentinel;
+
+    newlist->head = sentinel;
+    newlist->tail = sentinel;
+    
+    return newlist;
+}
+
+void destroylist(list *oldlist)
+{
+    DataNode *sentinel = oldlist->tail;
+    //DataNode *iternode = oldlist->head;
+//    DataNode *next;
+
+//Do not free the node. leave it to the skiplist
+/*
+    while (iternode != sentinel) {
+        next = iternode->next;
+        free(iternode);
+        iternode = next;
+    }
+*/
+    free(sentinel);
+    free(oldlist);
+}
+void listinsert(list *insertlist, DataNode *toinsert)
+{ // inserts a new item at the beginning
+    toinsert->hashnext_ = insertlist->head;
+    toinsert->previous_ = insertlist->tail;
+    insertlist->head = toinsert;
+}
+
+void listremove(list *curlist, DataNode *toremove)
+{ // remove a given node (use listsearch to find it)
+//Leave the free operation to the skiplist
+    if (curlist->head == toremove) {
+        curlist->head = toremove->hashnext_;
+        curlist->head->previous_ = toremove->previous_;
+//        free(toremove);
+    } else {
+        toremove->next_->previous_ = toremove->previous_;
+        toremove->previous_->hashnext_ = toremove->hashnext_;
+  //      free(toremove);
+    }
+}
+DataNode *listkeysearch(list *tosearch, const KeyType& key)
+{
+    DataNode *iternode = tosearch->head;
+    while (iternode != tosearch->tail) {
+       // if (strcmp(iternode->key_, key) == 0) {
+        if (iternode->key_== key) {
+            return iternode;
+        } else {
+            iternode = iternode->hashnext_;
+        }
+    }
+    return tosearch->tail;
+}
+
+int empty(list *tocheck)
+{
+    if (tocheck->head == tocheck->tail)
+        return 1;
+    else
+        return 0;
+}
+
+	void Insert(DataNode *new_node)
+	{
+    uint32_t index = hashindex(new_node->key_);
+//	std::cout<<"index:"<<index<<std::endl;
+    list *temp = table[index];
+//	std::cout<<"list:"<<table[index]<<std::endl;
+    listinsert(temp, new_node);
+	}
+uint32_t hashindex(const KeyType& key)
+{
+    uint64_t *data64;
+    uint64_t total4;
+    total4 = 0;
+    data64 = (uint64_t *) &key;
+    total4 = _mm_crc32_u64 (total4, *data64++);
+//	std::cout<<total4<<std::endl;
+    //return key % size_;
+    return total4 % size_;
+}
+DataNode *hashlookup( const KeyType& key)
+{ // find the value for key in hashtab
+        //return {nullptr};
+    uint32_t index;
+    index = hashindex(key);
+    list *templist =table[index];
+    if (~empty(templist)){
+        DataNode *tempnode = listkeysearch(templist, key);
+        return tempnode;}
+    else {
+        return {nullptr};
+    }
+}
+void hashdel(const KeyType& toremove)
+{ // delete the key/value pair from the hashtable
+    uint32_t index = hashindex(toremove);
+    list *templist = table[index];
+    if (! (empty(templist))) {
+        DataNode *delnode = listkeysearch(templist, toremove);
+        listremove(templist, delnode);
+    }
+}
+protected:
+    	list **table;
+	uint32_t size_;
+
+};
 
 class SkipList
 {
@@ -654,6 +810,8 @@ public:
     SkipList(uint8_t max_level, uint8_t skip)
             :head_(&head_node_)
             ,lanes_(std::make_unique<Lanes>(max_level, skip))
+	    ,table_(10000000)
+	    //,table_(std::numeric_limits<uint32_t>::max()/2)
     {
         tail_= head_;
     }
@@ -672,6 +830,8 @@ public:
         {
             tail_->next_ = ins;
             tail_ = ins;
+		//Add the hash table
+		table_.Insert(new_node);
             return ins;
         }
         return nullptr;
@@ -679,6 +839,9 @@ public:
 
     inline auto Find(const KeyType& key)
     {
+//	DataNode *A=table_.hashlookup(key);
+//	std::cout<<"key:"<<key<<"Data:"<<A->key_<<"node"<<A->data_<<std::endl;
+	return table_.hashlookup(key);
         return lanes_->Find(key);
     }
 
@@ -691,10 +854,12 @@ public:
     auto total_memory() const { return lanes_->total_memory(); }
 
 protected:
+//    HashTable *table;
     DataNode head_node_;
     DataNode* head_{nullptr};
     DataNode* tail_{nullptr};
     std::unique_ptr<Lanes> lanes_{nullptr};
+    HashTable table_;
 };
 
 } //core

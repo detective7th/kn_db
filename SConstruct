@@ -6,12 +6,13 @@ import pathlib
 import subprocess
 import re
 
-release = False
+release = True
 
 root_dir = os.getcwd()
 
-install_dir = os.path.join(root_dir, "debug")
-cflags_debug = '-Wall -std=c++1z -finline-functions -Wno-deprecated -g'
+#install_dir = os.path.join(root_dir, "debug")
+install_dir = os.path.join(root_dir, "release")
+cflags_debug = '-Wall -std=c++1z -finline-functions -Wno-deprecated -g -I/usr/include/openssl -lcrypto -lssl'
 cflags_release = '-Wall -std=c++1z -finline-functions -Wno-deprecated -O3'
 global_cppdefines = ['DEBUG_']
 

@@ -1,0 +1,21 @@
+scons: Reading SConscript files ...
+scons: done reading SConscript files.
+scons: Building targets ...
+g++ -o db_service/main.o -c -Wall -std=c++1z -finline-functions -Wno-deprecated -g -I/usr/include/openssl -lcrypto -lssl -mavx -DDEBUG_ -DVERSION=\"0.0.1\" -I. db_service/main.cpp
+In file included from ./db_core/table.h:29:0,
+                 from ./db_core/set.h:27,
+                 from ./db_core/data_base.h:27,
+                 from db_service/main.cpp:6:
+./db_core/skiplist.h: In member function 'kn::db::core::DataNode* kn::db::core::HashTable::listkeysearch(kn::db::core::list*, const KeyType&)':
+./db_core/skiplist.h:742:31: error: invalid type argument of unary '*' (have 'kn::db::core::KeyType {aka long unsigned int}')
+         if (iternode->key_== *key) {
+                               ^~~
+./db_core/skiplist.h: In member function 'auto kn::db::core::SkipList::Find(const KeyType&)':
+./db_core/skiplist.h:841:27: error: invalid conversion from 'const KeyType* {aka const long unsigned int*}' to 'kn::db::core::KeyType {aka long unsigned int}' [-fpermissive]
+  return table_.hashlookup(&key);
+                           ^~~~
+./db_core/skiplist.h:777:11: note:   initializing argument 1 of 'kn::db::core::DataNode* kn::db::core::HashTable::hashlookup(const KeyType&)'
+ DataNode *hashlookup( const KeyType& key)
+           ^~~~~~~~~~
+scons: *** [db_service/main.o] Error 1
+scons: building terminated because of errors.

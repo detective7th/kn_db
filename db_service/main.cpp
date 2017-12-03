@@ -18,6 +18,22 @@ int main(int argc, char* argv[])
     gflags::SetVersionString(version_str.str());
     gflags::ParseCommandLineFlags(&argc, &argv, true);
 
+    //kn::db::core::SkipList sl(2, 2);
+    //for (int i = 0; i != 32; ++i)
+    //{
+    //    sl.Insert(new kn::db::core::DataNode{nullptr, 0, i});
+    //}
+
+    //std::cout << sl << std::endl;
+
+    //for (int i = 0; i != 32; ++i)
+    //{
+    //    assert(sl.Find(i));
+    //}
+    //std::cout << sl << std::endl;
+
+    //return 0;
+
     boost::filesystem::path data_path(FLAGS_data_path);
     if (!boost::filesystem::exists(data_path))
     {
@@ -99,19 +115,20 @@ int main(int argc, char* argv[])
         }
     }
 
-    auto table = base.GetSet("orders")->GetTable("000002");
-    auto tmp = table->total_memory();
+    auto table = base.GetSet("transactions")->GetTable("000002");
 
-    std::cout << "memory(MB):" << tmp / 1024 / 1024 << std::endl;
+    std::cout << "memory(MB):" << table->total_memory() / 1024 / 1024 << std::endl;
+    auto res = table->Find(85900655892627062);
+    std::cout << res << std::endl;
 
-    for (auto key : orders_keys)
-    {
-        auto data_node = table->Find(key);
-        assert(data_node);
-    }
+    //for (auto key : orders_keys)
+    //{
+    //    auto data_node = table->Find(key);
+    //    assert(data_node);
+    //}
 
-    auto nodes = table->Find(orders_keys[10], orders_keys[300]);
-    assert(nodes.start_);
-    assert(nodes.end_);
+    //auto nodes = table->Find(orders_keys[10], orders_keys[300]);
+    //assert(nodes.start_);
+    //assert(nodes.end_);
     return 0;
 }

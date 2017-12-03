@@ -27,6 +27,7 @@
 #include <folly/MemoryMapping.h>
 #include <folly/FBString.h>
 #include "skiplist.h"
+#include "../db_service/data_def.h"
 
 namespace kn
 {
@@ -65,6 +66,7 @@ public:
             data.advance(row_len_);
         }
     }
+
     folly::StringPiece name() { return {name_.begin(), name_.end()}; }
 
     inline auto Find(const KeyType& key)
@@ -79,6 +81,8 @@ public:
 
     auto total_slots_size() { return skip_list_->total_slots_size(); }
     auto total_memory() { return skip_list_->total_memory(); }
+
+    auto skip_list() { return skip_list_.get(); }
 
 protected:
     folly::fbstring name_;

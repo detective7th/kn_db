@@ -17,7 +17,7 @@ OBJS=$(CPP_OBJ) #$(PB_OBJ)
 
 ######################debug release#########################
 #debug
-CCFLAGS=-g -O0 -msse4.2
+CCFLAGS=-g -O3 -msse4.2 
 LIBINC=-L/usr/lib/boost/ -L/usr/local/lib/
 BINDIR=./debug
 
@@ -47,7 +47,7 @@ INC=-I. -I../
 
 #CCFLAGS += -c $(RELEASEFLAG) -m64 -std=c++11 -DBOOST_ALL_DYN_LINK -DBOOST_LOG_DYN_LINK -DGROUND_ENABLE_MULTI_THREAD -DGROUND_ENABLE_FILE_LOG
 CCFLAGS += -c -Wall -m64 -std=c++1z 
-CCFLAGS2 = -Wall -m64 -std=c++1z  
+CCFLAGS2 = -Wall -m64 -std=c++1z -msse4.2 -O3
 
 SCPP=g++ $(CCFLAGS)
 SCPP2 = g++ $(CCFLAGS2)

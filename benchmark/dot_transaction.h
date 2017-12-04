@@ -252,6 +252,7 @@ void set_search_bench_single(const std::string& path)
     void rand_bench_skiplist_search(int iters, Table* table,const std::vector<int64_t>& search_key)
     {
                     //std::cout <<"nunllptr,key:"<< iters<<std::endl;
+                    int i=0;
         folly::BenchmarkSuspender braces;
        
         braces.dismissing([&] {
@@ -259,7 +260,12 @@ void set_search_bench_single(const std::string& path)
                     //std::cout <<"nunllptr,key:"<< iters<<std::endl;
                 for(const auto& iter : search_key)
                 {
-                    table->Find(iter);
+                    DataNode *A=table->Find(iter);
+			if(iter==A->key_)
+				i++;
+			
+                    //std::cout <<"key:"<< iter<<"searched:"<<A->key_<<std::endl;
+			
                     // if(!res)
                     // {
                     //     std::cout <<"nunllptr,key:"<< iter;
@@ -269,6 +275,7 @@ void set_search_bench_single(const std::string& path)
                    // std::cout <<"nunllptr,key:"<< iters<<std::endl;
             }
         });
+//                    std::cout <<"matched:"<<i<<std::endl;
     }
     void set_search_skiplist(kn::db::core::DataBase& base)
     {

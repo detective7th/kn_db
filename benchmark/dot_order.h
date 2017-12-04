@@ -257,6 +257,7 @@ void set_search_bench_single(std::string path)
     }
     void rand_bench_skiplist_search(int iters, Table* table,const std::vector<int64_t>& search_key)
     {
+                    int i=0;
         folly::BenchmarkSuspender braces;
                     //std::cout <<"dot_order"<< iters<<std::endl;
        
@@ -264,7 +265,9 @@ void set_search_bench_single(std::string path)
             while (iters--) {
                 for(const auto& iter : search_key)
                 {
-                    table->Find(iter);
+                    DataNode *A=table->Find(iter);
+			if(iter==A->key_)
+				i++;
                     // if(!res)
                     // {
                     //     std::cout <<"nunllptr,key:"<< iter;

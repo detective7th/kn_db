@@ -256,12 +256,14 @@ std::vector<int64_t> rand_search_key()
 void rand_bench_skiplist_search(int iters, Table* table,const std::vector<int64_t>& search_key)
 {
     folly::BenchmarkSuspender braces;
-   
+  int i; 
     braces.dismissing([&] {
         while (iters--) {
             for(const auto& iter : search_key)
             {
-                table->Find(iter);
+                DataNode *A=table->Find(iter);
+		if(A->key_==iter)
+			i++;
                 // if(!res)
                 // {
                 //     std::cout <<"nunllptr,key:"<< iter;

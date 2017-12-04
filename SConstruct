@@ -12,19 +12,17 @@ root_dir = os.getcwd()
 
 #install_dir = os.path.join(root_dir, "debug")
 install_dir = os.path.join(root_dir, "release")
-cflags_debug = '-Wall -std=c++1z -finline-functions -Wno-deprecated -g -I/usr/include/openssl -lcrypto -lssl'
+cflags_debug = '-Wall -std=c++1z -finline-functions -Wno-deprecated -g'
 cflags_release = '-Wall -std=c++1z -finline-functions -Wno-deprecated -O3'
 global_cppdefines = ['DEBUG_']
 
 protoc_bin_path = ""
 fast_type_gen_bin_path = ""
 
-config_service_ws_srv_compress = False
-config_service_config_file_force_update = False
-
 lib_path = ["/usr/local/lib", install_dir]
 
-env = Environment(CCFLAGS = cflags_debug, LIBPATH = lib_path, CPPPATH = [root_dir]
+env = Environment(CCFLAGS = cflags_debug, LIBPATH = lib_path
+                  , CPPPATH = ["/usr/include", "/usr/local/include", root_dir]
                   , CPPDEFINES = global_cppdefines)
 
 for key, value in ARGLIST:

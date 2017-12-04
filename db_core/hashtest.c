@@ -8,11 +8,11 @@ int main() {
     printf("initialize list:\n");
     list *mylist = listinit();
     printlist(mylist);
-    
+
     printf("\nadd things:\n");
-    listinsert(mylist, nodegen("key", "value", "\0"));
-    listinsert(mylist, nodegen("bloop", "dingles", "\0"));
-    node *testnode = nodegen("canwe", "delete?", "\0");
+    listinsert(mylist, nodegen("key", "value", (unsigned char*)"\0"));
+    listinsert(mylist, nodegen("bloop", "dingles", (unsigned char*)"\0"));
+    node *testnode = nodegen("canwe", "delete?", (unsigned char*)"\0");
     listinsert(mylist, testnode);
     printlist(mylist);
 
@@ -79,7 +79,7 @@ int main() {
     printf("\ncan we still print everything OK?\n");
     printhashtab(table);
     // works when nothing is in it!
-    
+
     printf("\ncan we insert stuff?\n");
     inserthash(table, "foo", "bar");
     inserthash(table, "potato", "salad");
@@ -114,4 +114,3 @@ int main() {
     destroyhash(second);
 
 }
-

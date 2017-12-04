@@ -10,10 +10,12 @@
 #include <memory>
 #include <iostream>
 #include <time.h>
+#include <folly/Likely.h>
 #include "db_core/data_base.h"
 #include "db_service/data_def.h"
 #include "skiplist.hpp"
 #include "btree.h"
+
 namespace ndt
 {
 using namespace folly;
@@ -168,7 +170,7 @@ void set_search_bench_single(const std::string& path)
     //             return iters;
     //         });
     search_key = rand_count_in_vec(search_key);
-    std::cout<< "search key size:" << search_key.size() << std::endl;  
+    std::cout<< "search key size:" << search_key.size() << std::endl;
     const std::string test_name("transaction_test");
     addBenchmark(
         test_name.c_str(),
@@ -176,7 +178,7 @@ void set_search_bench_single(const std::string& path)
         [=](int iters) {
             rand_search_bench_com<std::map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_map, search_key, fun_map_search<std::map<int64_t, std::shared_ptr<DataNode>>,int64_t>);
             return iters;
-        });    
+        });
     addBenchmark(
         test_name.c_str(),
         "unordered_map",
@@ -218,18 +220,17 @@ void set_search_bench_single(const std::string& path)
             [=](int iters) {
                 rand_search_bench_com< art::radix_map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_art_trans, search_key, fun_map_search< art::radix_map<int64_t,std::shared_ptr<DataNode>>, int64_t>);
                 return iters;
-            });    
+            });
     }
-    std::vector<int64_t> rand_search_key()
+    std::vector<int64_t> rand_search_key(const std::string& file)
     {
-        std::string path = "/home/hzs/SSE/kn_db/data/transactions/000002";
         std::shared_ptr<folly::MemoryMapping> tmp_mapping = nullptr;
-        file_mapping = std::make_shared<folly::MemoryMapping>(path.c_str());
+        file_mapping = std::make_shared<folly::MemoryMapping>(file.c_str());
 
         folly::StringPiece file_data;
         file_data = file_mapping->data();
         file_data = file_data.subpiece(sizeof(uint32_t));
-        
+
         int size = file_data.size()/sizeof(Transaction);
         std::vector<int64_t> con;
         if(size <=0 || (file_data.size()% sizeof(Transaction) != 0 ))
@@ -251,35 +252,25 @@ void set_search_bench_single(const std::string& path)
     }
     void rand_bench_skiplist_search(int iters, Table* table,const std::vector<int64_t>& search_key)
     {
-                    //std::cout <<"nunllptr,key:"<< iters<<std::endl;
-                    int i=0;
+        //std::cout <<"nunllptr,key:"<< iters<<std::endl;
         folly::BenchmarkSuspender braces;
-       
+
         braces.dismissing([&] {
             while (iters--) {
-                    //std::cout <<"nunllptr,key:"<< iters<<std::endl;
                 for(const auto& iter : search_key)
                 {
-                    DataNode *A=table->Find(iter);
-			if(iter==A->key_)
-				i++;
-			
-                    //std::cout <<"key:"<< iter<<"searched:"<<A->key_<<std::endl;
-			
-                    // if(!res)
-                    // {
-                    //     std::cout <<"nunllptr,key:"<< iter;
-                    // }  
+                    if(UNLIKELY(static_cast<kn::db::core::KeyType>(iter) != table->Find(iter)->key_))
+                    {
+                        std::cerr << "key miss" << std::endl;
+                    }
                 }
-                //folly::doNotOptimizeAway(base); 
-                   // std::cout <<"nunllptr,key:"<< iters<<std::endl;
             }
         });
-//                    std::cout <<"matched:"<<i<<std::endl;
     }
-    void set_search_skiplist(kn::db::core::DataBase& base)
+
+    void set_search_skiplist(kn::db::core::DataBase& base, const std::string& path)
     {
-        auto search_key = rand_search_key();
+        auto search_key = rand_search_key(path + "/transactions/000002");
         std::cout << "tranaction_test ,total size : "<< search_key.size() << std::endl;
         search_key = rand_count_in_vec(search_key);
         //std::reverse(search_key.begin(), search_key.end());
@@ -287,12 +278,12 @@ void set_search_bench_single(const std::string& path)
         auto table = base.GetSet("transactions")->GetTable("000002").get();
         addBenchmark(
             "transaction_test",
-            "skiplist",
+            "lcssl",
             [=](int iters) {
                 rand_bench_skiplist_search(iters , table, search_key);
 //		std::cout<<iters<<std::endl;
                 return iters;
             });
-    } 
+    }
 }// namespace ndt
 #endif

@@ -516,7 +516,7 @@ public:
         }
 	//add the info for hash table. Insert the element into hash table
 //	inserthash(table, p.first, p.second);
-	
+
 
         ++total_elements_;
 
@@ -678,11 +678,13 @@ typedef struct list {
     DataNode *head {nullptr};
     DataNode *tail {nullptr};
 } list;
+
 class HashTable
 {
     friend class SkipList;
 public:
-	HashTable(int size){
+	HashTable(int size)
+    {
 		size_=size;
 		table = (list **)malloc(sizeof (list) * size);
 		int i;
@@ -691,119 +693,119 @@ public:
 		}
 	}
 
-// functions
-list *listinit()
-{
-    list *newlist;
-    newlist = (list*)malloc(sizeof (list));
-    DataNode *sentinel;
-    sentinel = (DataNode*)malloc(sizeof (DataNode));
+    // functions
+    list *listinit()
+    {
+        list *newlist;
+        newlist = (list*)malloc(sizeof (list));
+        DataNode *sentinel;
+        sentinel = (DataNode*)malloc(sizeof (DataNode));
 
-    sentinel->key_ = '\0';
-    sentinel->data_ = '\0';
-    sentinel->hashnext_ = sentinel;
-    sentinel->previous_ = sentinel;
+        sentinel->key_ = (kn::db::core::KeyType)'\0';
+        sentinel->data_ = nullptr;
+        sentinel->hashnext_ = sentinel;
+        sentinel->previous_ = sentinel;
 
-    newlist->head = sentinel;
-    newlist->tail = sentinel;
-    
-    return newlist;
-}
+        newlist->head = sentinel;
+        newlist->tail = sentinel;
 
-void destroylist(list *oldlist)
-{
-    DataNode *sentinel = oldlist->tail;
-    //DataNode *iternode = oldlist->head;
-//    DataNode *next;
-
-//Do not free the node. leave it to the skiplist
-/*
-    while (iternode != sentinel) {
-        next = iternode->next;
-        free(iternode);
-        iternode = next;
+        return newlist;
     }
-*/
-    free(sentinel);
-    free(oldlist);
-}
-void listinsert(list *insertlist, DataNode *toinsert)
-{ // inserts a new item at the beginning
-    toinsert->hashnext_ = insertlist->head;
-    toinsert->previous_ = insertlist->tail;
-    insertlist->head = toinsert;
-}
 
-void listremove(list *curlist, DataNode *toremove)
-{ // remove a given node (use listsearch to find it)
-//Leave the free operation to the skiplist
-    if (curlist->head == toremove) {
-        curlist->head = toremove->hashnext_;
-        curlist->head->previous_ = toremove->previous_;
-//        free(toremove);
-    } else {
-        toremove->next_->previous_ = toremove->previous_;
-        toremove->previous_->hashnext_ = toremove->hashnext_;
-  //      free(toremove);
+    void destroylist(list *oldlist)
+    {
+        DataNode *sentinel = oldlist->tail;
+        //DataNode *iternode = oldlist->head;
+    //    DataNode *next;
+
+    //Do not free the node. leave it to the skiplist
+    /*
+        while (iternode != sentinel) {
+            next = iternode->next;
+            free(iternode);
+            iternode = next;
+        }
+    */
+        free(sentinel);
+        free(oldlist);
     }
-}
-DataNode *listkeysearch(list *tosearch, const KeyType& key)
-{
-    DataNode *iternode = tosearch->head;
-//int i;
-    while (iternode != tosearch->tail) {
-//	i++;
-        if (iternode->key_== key) {
-//	std::cout<<"iter:"<<i<<std::endl;
-            return iternode;
+    void listinsert(list *insertlist, DataNode *toinsert)
+    { // inserts a new item at the beginning
+        toinsert->hashnext_ = insertlist->head;
+        toinsert->previous_ = insertlist->tail;
+        insertlist->head = toinsert;
+    }
+
+    void listremove(list *curlist, DataNode *toremove)
+    { // remove a given node (use listsearch to find it)
+    //Leave the free operation to the skiplist
+        if (curlist->head == toremove) {
+            curlist->head = toremove->hashnext_;
+            curlist->head->previous_ = toremove->previous_;
+    //        free(toremove);
         } else {
-            iternode = iternode->hashnext_;
+            toremove->next_->previous_ = toremove->previous_;
+            toremove->previous_->hashnext_ = toremove->hashnext_;
+      //      free(toremove);
         }
     }
-    return tosearch->tail;
-}
+    DataNode *listkeysearch(list *tosearch, const KeyType& key)
+    {
+        DataNode *iternode = tosearch->head;
+    //int i;
+        while (iternode != tosearch->tail) {
+    //	i++;
+            if (iternode->key_== key) {
+    //	std::cout<<"iter:"<<i<<std::endl;
+                return iternode;
+            } else {
+                iternode = iternode->hashnext_;
+            }
+        }
+        return tosearch->tail;
+    }
 
 
-	void Insert(DataNode *new_node)
-	{
-    uint32_t index = hashindex(new_node->key_);
-//	std::cout<<"index:"<<index<<std::endl;
-    list *temp = table[index];
-//	std::cout<<"list:"<<table[index]<<std::endl;
-    listinsert(temp, new_node);
-	}
-uint32_t hashindex(const KeyType& key)
-{
-    uint64_t *data64;
-    data64 = (uint64_t *) &key;
-    uint32_t total4;
-    total4 = 0;
-    total4 = _mm_crc32_u64 (total4, *data64++);
-    return total4&(0xffffff);
-}
-DataNode *hashlookup( const KeyType& key)
-{ // find the value for key in hashtab
-    uint32_t index;
-    index = hashindex(key);
-    list *templist =table[index];
-        DataNode *tempnode = listkeysearch(templist, key);
-        return tempnode;
-    if (templist->head!=templist->tail){
-        DataNode *tempnode = listkeysearch(templist, key);
-        return tempnode;}
-    else {
-        return {nullptr};
+    	void Insert(DataNode *new_node)
+    	{
+        uint32_t index = hashindex(new_node->key_);
+    //	std::cout<<"index:"<<index<<std::endl;
+        list *temp = table[index];
+    //	std::cout<<"list:"<<table[index]<<std::endl;
+        listinsert(temp, new_node);
+    	}
+    uint32_t hashindex(const KeyType& key)
+    {
+        uint64_t *data64;
+        data64 = (uint64_t *) &key;
+        uint32_t total4;
+        total4 = 0;
+        total4 = _mm_crc32_u64 (total4, *data64++);
+        return total4&(0xffffff);
     }
-}
-void hashdel(const KeyType& toremove)
-{ // delete the key/value pair from the hashtable
-    uint32_t index = hashindex(toremove);
-    list *templist = table[index];
-    if (templist->head!=templist->tail) {
-        DataNode *delnode = listkeysearch(templist, toremove);
-        listremove(templist, delnode);
+    DataNode *hashlookup( const KeyType& key)
+    { // find the value for key in hashtab
+        uint32_t index;
+        index = hashindex(key);
+        list *templist =table[index];
+            DataNode *tempnode = listkeysearch(templist, key);
+            return tempnode;
+        if (templist->head!=templist->tail){
+            DataNode *tempnode = listkeysearch(templist, key);
+            return tempnode;}
+        else {
+            return {nullptr};
+        }
     }
-}
+    void hashdel(const KeyType& toremove)
+    { // delete the key/value pair from the hashtable
+        uint32_t index = hashindex(toremove);
+        list *templist = table[index];
+        if (templist->head!=templist->tail) {
+            DataNode *delnode = listkeysearch(templist, toremove);
+            listremove(templist, delnode);
+        }
+    }
 protected:
     	list **table;
 	uint32_t size_;

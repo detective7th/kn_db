@@ -18,22 +18,6 @@ int main(int argc, char* argv[])
     gflags::SetVersionString(version_str.str());
     gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-    //kn::db::core::SkipList sl(2, 2);
-    //for (int i = 0; i != 32; ++i)
-    //{
-    //    sl.Insert(new kn::db::core::DataNode{nullptr, 0, i});
-    //}
-
-    //std::cout << sl << std::endl;
-
-    //for (int i = 0; i != 32; ++i)
-    //{
-    //    assert(sl.Find(i));
-    //}
-    //std::cout << sl << std::endl;
-
-    //return 0;
-
     boost::filesystem::path data_path(FLAGS_data_path);
     if (!boost::filesystem::exists(data_path))
     {

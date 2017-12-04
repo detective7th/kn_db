@@ -34,7 +34,7 @@ list *listinit()
 
     newlist->head = sentinel;
     newlist->tail = sentinel;
-    
+
     return newlist;
 }
 
@@ -128,5 +128,3 @@ void printlist(list *toprint)
 	iternode = iternode->next;
     }
 }
-
-

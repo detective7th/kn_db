@@ -2,9 +2,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <openssl/sha.h>
-#include "hashlist.h"
 #include <stdint.h>
 #include <immintrin.h>
+#include "hashlist.h"
+
 #define SHA_DIGEST_LENGTH 64
 
 typedef struct hashtable {
@@ -14,7 +15,6 @@ typedef struct hashtable {
 
 int hashindex(hashtable *table, char *key, unsigned char *output)
 {
-    int index;
     uint64_t *data64;
     uint64_t total4;
     total4 = 0;
@@ -114,5 +114,5 @@ void hashdel(hashtable *hashtab, char *toremove)
 void hash(unsigned char *key, unsigned char *output)
 { // for testing
     size_t len = sizeof(key);
-//    SHA1(key, len, output);
+    SHA1(key, len, output);
 }

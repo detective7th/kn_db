@@ -1,6 +1,5 @@
 #ifndef _TEST_DOT_SHAREING_H_
 #define _TEST_DOT_SHAREING_H_
-#include "rand_common.h"
 #include <folly/Benchmark.h>
 #include <folly/MemoryMapping.h>
 #include <folly/String.h>
@@ -10,20 +9,23 @@
 #include <unordered_map>
 #include <memory>
 #include <iostream>
-#include "folly/FBString.h"
+#include <folly/FBString.h>
+#include <folly/Likely.h>
+#include "rand_common.h"
 #include "db_core/data_base.h"
 #include "db_service/data_def.h"
 #include "skiplist.hpp"
 #include "btree.h"
 #include "art/radix_map.h"
 #include "stx/btree_map.h"
-namespace nts 
+
+namespace nts
 {
 const int kSecurityCodeLength = 6;
 using namespace folly;
 using namespace kn::db::core;
 using namespace kn::db::service;
-struct spookyhask 
+struct spookyhask
 {
     size_t operator()(const std::string &key) const
     {
@@ -111,14 +113,16 @@ void set_rand_bench_single(const std::string& path,const std::string& id)
         __FILE__,
         "timesharing_map_insert",
         [=](int iters) {
-            rand_bench_com<std::map<std::string, TimeShare*>>(iters ,file_data, fun_map_insert<std::map<std::string, TimeShare*>>);
+            rand_bench_com<std::map<std::string, TimeShare*>>
+                    (iters ,file_data, fun_map_insert<std::map<std::string, TimeShare*>>);
             return iters;
         });
     addBenchmark(
         __FILE__,
         "timesharing_unordered_map_insert",
         [=](int iters) {
-            rand_bench_com<std::unordered_map<std::string, TimeShare*>>(iters ,file_data, fun_map_insert<std::unordered_map<std::string, TimeShare*>>);
+            rand_bench_com<std::unordered_map<std::string, TimeShare*>>
+                    (iters ,file_data, fun_map_insert<std::unordered_map<std::string, TimeShare*>>);
             return iters;
         });
 }
@@ -175,19 +179,22 @@ void set_search_bench_single(std::string path)
     search_key = rand_count_in_vec(search_key);
     //std::reverse(search_key.begin(), search_key.end());
     std::cout<< "search key size:" << search_key.size() << std::endl;
-    const std::string test_name("timeshare_test");  
+    const std::string test_name("timeshare_test");
     addBenchmark(
         test_name.c_str(),
         "map",
         [=](int iters) {
-            rand_search_bench_com<std::map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_map, search_key, fun_map_search<std::map<int64_t,std::shared_ptr<DataNode>>, int64_t>);
+            rand_search_bench_com<std::map<int64_t, std::shared_ptr<DataNode>>, int64_t>
+                    (iters ,test_map, search_key, fun_map_search<std::map<int64_t,std::shared_ptr<DataNode>>, int64_t>);
             return iters;
-        });    
+        });
     addBenchmark(
         test_name.c_str(),
         "unordered_map",
         [=](int iters) {
-            rand_search_bench_com<std::unordered_map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_hash_map, search_key, fun_map_search<std::unordered_map<int64_t, std::shared_ptr<DataNode>>, int64_t>);
+            rand_search_bench_com<std::unordered_map<int64_t, std::shared_ptr<DataNode>>, int64_t>
+                    (iters ,test_hash_map, search_key
+                     , fun_map_search<std::unordered_map<int64_t, std::shared_ptr<DataNode>>, int64_t>);
             return iters;
         });
     addBenchmark(
@@ -201,41 +208,49 @@ void set_search_bench_single(std::string path)
         test_name.c_str(),
         "tradition_skiplist",
         [=](int iters) {
-            rand_search_bench_com<guoxiao::skiplist::SkipList<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_skip_list, search_key, fun_map_search<guoxiao::skiplist::SkipList<int64_t,std::shared_ptr<DataNode>>, int64_t>);
+            rand_search_bench_com<guoxiao::skiplist::SkipList<int64_t, std::shared_ptr<DataNode>>, int64_t>
+                    (iters ,test_skip_list, search_key
+                     , fun_map_search<guoxiao::skiplist::SkipList<int64_t,std::shared_ptr<DataNode>>, int64_t>);
             return iters;
         });
     addBenchmark(
         test_name.c_str(),
         "btree",
         [=](int iters) {
-            rand_search_bench_com<trees::BTree<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_btree, search_key, fun_map_search<trees::BTree<int64_t,std::shared_ptr<DataNode>>, int64_t>);
+            rand_search_bench_com<trees::BTree<int64_t, std::shared_ptr<DataNode>>, int64_t>
+                    (iters ,test_btree, search_key
+                     , fun_map_search<trees::BTree<int64_t,std::shared_ptr<DataNode>>, int64_t>);
             return iters;
         });
     addBenchmark(
         test_name.c_str(),
         "bplustree",
         [=](int iters) {
-            rand_search_bench_com<stx::btree_map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_bplustree, search_key, fun_map_search<stx::btree_map<int64_t,std::shared_ptr<DataNode>>, int64_t>);
+            rand_search_bench_com<stx::btree_map<int64_t, std::shared_ptr<DataNode>>, int64_t>
+                    (iters ,test_bplustree, search_key
+                     , fun_map_search<stx::btree_map<int64_t,std::shared_ptr<DataNode>>, int64_t>);
             return iters;
         });
     addBenchmark(
         test_name.c_str(),
         "art tree",
         [=](int iters) {
-            rand_search_bench_com< art::radix_map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_art, search_key, fun_map_search< art::radix_map<int64_t,std::shared_ptr<DataNode>>, int64_t>);
+            rand_search_bench_com< art::radix_map<int64_t, std::shared_ptr<DataNode>>, int64_t>
+                    (iters ,test_art, search_key
+                     , fun_map_search< art::radix_map<int64_t,std::shared_ptr<DataNode>>, int64_t>);
             return iters;
-        }); 
+        });
 }
-std::vector<int64_t> rand_search_key()
+
+std::vector<int64_t> rand_search_key(const std::string& file)
 {
-    std::string path = "/home/hzs/SSE/kn_db/data/one_min/000002";
     std::shared_ptr<folly::MemoryMapping> tmp_mapping = nullptr;
-    file_mapping = std::make_shared<folly::MemoryMapping>(path.c_str());
+    file_mapping = std::make_shared<folly::MemoryMapping>(file.c_str());
 
     folly::StringPiece file_data;
     file_data = file_mapping->data();
     file_data = file_data.subpiece(sizeof(uint32_t));
-    
+
     int size = file_data.size()/sizeof(Order);
     std::vector<int64_t> con;
     if(size <=0 || (file_data.size()% sizeof(Order) != 0 ))
@@ -253,29 +268,27 @@ std::vector<int64_t> rand_search_key()
     }
     return con;
 }
+
 void rand_bench_skiplist_search(int iters, Table* table,const std::vector<int64_t>& search_key)
 {
     folly::BenchmarkSuspender braces;
-  int i; 
     braces.dismissing([&] {
         while (iters--) {
             for(const auto& iter : search_key)
             {
-                DataNode *A=table->Find(iter);
-		if(A->key_==iter)
-			i++;
-                // if(!res)
-                // {
-                //     std::cout <<"nunllptr,key:"<< iter;
-                // }  
+                if(UNLIKELY(static_cast<kn::db::core::KeyType>(iter) != table->Find(iter)->key_))
+                {
+                    std::cerr << "key miss" << std::endl;
+                }
             }
-            //folly::doNotOptimizeAway(base); 
+            //folly::doNotOptimizeAway(base);
         }
     });
 }
-void set_search_skiplist(kn::db::core::DataBase& base)
+
+void set_search_skiplist(kn::db::core::DataBase& base, const std::string& path)
 {
-    auto search_key = rand_search_key();
+    auto search_key = rand_search_key(path + "/one_min/000002");
     std::cout << "timeshare_test ,total size : "<< search_key.size() << std::endl;
     search_key = rand_count_in_vec(search_key);
     //std::reverse(search_key.begin(), search_key.end());
@@ -283,7 +296,7 @@ void set_search_skiplist(kn::db::core::DataBase& base)
     auto table = base.GetSet("one_min")->GetTable("000002").get();
     addBenchmark(
         "timeshare_test",
-        "skiplist",
+        "lcssl",
         [=](int iters) {
             rand_bench_skiplist_search(iters , table, search_key);
             return iters;

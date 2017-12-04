@@ -533,13 +533,12 @@ public:
     {
         //cur_pos is abs idx
     //        std::cout << sizeof(key) << std::endl;
-    ///*
-    uint64_t *data64;
-    uint64_t total4;
-    total4 = 0;
-    data64 = (uint64_t *) &key;
-    total4 = _mm_crc32_u64 (total4, *data64);
- //       */
+    /*
+    uint32_t *data64;
+    uint32_t total4;
+    data64 = (uint32_t *) &key;
+    total4 = _mm_crc32_u32 (total4, *data64);
+        */
 	auto cur_pos = lanes_[max_level_ - 1].BinarySearch(key);
         auto r_pos = GetProxyLaneRelPos(cur_pos, key);
         return lanes_[0].SearchProxyLane(r_pos, key);
@@ -751,9 +750,11 @@ void listremove(list *curlist, DataNode *toremove)
 DataNode *listkeysearch(list *tosearch, const KeyType& key)
 {
     DataNode *iternode = tosearch->head;
+//int i;
     while (iternode != tosearch->tail) {
-       // if (strcmp(iternode->key_, key) == 0) {
+//	i++;
         if (iternode->key_== key) {
+//	std::cout<<"iter:"<<i<<std::endl;
             return iternode;
         } else {
             iternode = iternode->hashnext_;
@@ -762,13 +763,6 @@ DataNode *listkeysearch(list *tosearch, const KeyType& key)
     return tosearch->tail;
 }
 
-int empty(list *tocheck)
-{
-    if (tocheck->head == tocheck->tail)
-        return 1;
-    else
-        return 0;
-}
 
 	void Insert(DataNode *new_node)
 	{
@@ -781,21 +775,20 @@ int empty(list *tocheck)
 uint32_t hashindex(const KeyType& key)
 {
     uint64_t *data64;
-    uint64_t total4;
-    total4 = 0;
     data64 = (uint64_t *) &key;
+    uint32_t total4;
+    total4 = 0;
     total4 = _mm_crc32_u64 (total4, *data64++);
-//	std::cout<<total4<<std::endl;
-    //return key % size_;
-    return total4 % size_;
+    return total4&(0xffffff);
 }
 DataNode *hashlookup( const KeyType& key)
 { // find the value for key in hashtab
-        //return {nullptr};
     uint32_t index;
     index = hashindex(key);
     list *templist =table[index];
-    if (~empty(templist)){
+        DataNode *tempnode = listkeysearch(templist, key);
+        return tempnode;
+    if (templist->head!=templist->tail){
         DataNode *tempnode = listkeysearch(templist, key);
         return tempnode;}
     else {
@@ -806,7 +799,7 @@ void hashdel(const KeyType& toremove)
 { // delete the key/value pair from the hashtable
     uint32_t index = hashindex(toremove);
     list *templist = table[index];
-    if (! (empty(templist))) {
+    if (templist->head!=templist->tail) {
         DataNode *delnode = listkeysearch(templist, toremove);
         listremove(templist, delnode);
     }
@@ -824,7 +817,7 @@ public:
     SkipList(uint8_t max_level, uint8_t skip)
             :head_(&head_node_)
             ,lanes_(std::make_unique<Lanes>(max_level, skip))
-	    ,table_(10000000)
+	    ,table_(1<<25)
 	    //,table_(std::numeric_limits<uint32_t>::max()/2)
     {
         tail_= head_;
@@ -855,7 +848,7 @@ public:
     {
 //	DataNode *A=table_.hashlookup(key);
 //	std::cout<<"key:"<<key<<"Data:"<<A->key_<<"node"<<A->data_<<std::endl;
-	return table_.hashlookup(key);
+//	return table_.hashlookup(key);
         return lanes_->Find(key);
     }
 

@@ -17,7 +17,7 @@ OBJS=$(CPP_OBJ) #$(PB_OBJ)
 
 ######################debug release#########################
 #debug
-CCFLAGS=-g -O3 -msse4.2 
+CCFLAGS=-g -O3 -msse4.2
 LIBINC=-L/usr/lib/boost/ -L/usr/local/lib/
 BINDIR=./debug
 
@@ -29,7 +29,7 @@ BINDIR=./debug
 
 #LIBS=-lmysqlclient -lpthread -lz -lm -lssl -lcrypto -ldl -lprotobuf -lprotobuf-lite -lprotoc -lboost_log_setup -lboost_log -lboost_date_time \
 	-lboost_system -lboost_filesystem -lpthread -lboost_thread -lboost_program_options \
-	-lboost_locale 
+	-lboost_locale
 
 LIBS=-lpthread  -lfolly -lglog -lgflags -lfollybenchmark -lboost_system -lboost_filesystem
 
@@ -46,29 +46,29 @@ INC=-I. -I../
 
 
 #CCFLAGS += -c $(RELEASEFLAG) -m64 -std=c++11 -DBOOST_ALL_DYN_LINK -DBOOST_LOG_DYN_LINK -DGROUND_ENABLE_MULTI_THREAD -DGROUND_ENABLE_FILE_LOG
-CCFLAGS += -c -Wall -m64 -std=c++1z 
+CCFLAGS += -c -Wall -m64 -std=c++1z
 CCFLAGS2 = -Wall -m64 -std=c++1z -msse4.2 -O3
 
 SCPP=g++ $(CCFLAGS)
 SCPP2 = g++ $(CCFLAGS2)
 #SCPP=gcc $(CCFLAGS)
-SCLK=g++ 
+SCLK=g++
 #SCLK=gcc
 
 all:$(OBJS)
-	$(SCPP) -o  $(PRGM)   $(OBJS)  $(LIBINC) $(LIBS)  
-	$(SCPP2) -o $(PRGM)  $(OBJS)  $(LIBINC) $(LIBS) 
-	
+	$(SCPP) -o  $(PRGM)   $(OBJS)  $(LIBINC) $(LIBS)
+	$(SCPP2) -o $(PRGM)  $(OBJS)  $(LIBINC) $(LIBS)
+
 clean:
-	rm *.o *.log $(PRGM)
+	rm *.o $(PRGM)
 
 .SUFFIXES: .cpp .cc .o
 
 .cpp.o:
 	$(SCPP) $(INC) $< -o $@
-	
+
 .cc.o:
-	$(SCPP) $(INC) $< 
+	$(SCPP) $(INC) $<
 
 $(PRGM):$(OBJS)
 	$(SCLK) -o $(PRGM) $(OBJS) $(LIBINC) $(LIBS)

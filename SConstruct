@@ -6,12 +6,12 @@ import pathlib
 import subprocess
 import re
 
-release = True
+release = False
 
 root_dir = os.getcwd()
 
-#install_dir = os.path.join(root_dir, "debug")
-install_dir = os.path.join(root_dir, "release")
+install_dir = os.path.join(root_dir, "debug")
+#install_dir = os.path.join(root_dir, "release")
 cflags_debug = '-Wall -std=c++1z -finline-functions -Wno-deprecated -g'
 cflags_release = '-Wall -std=c++1z -finline-functions -Wno-deprecated -O3'
 global_cppdefines = ['DEBUG_']

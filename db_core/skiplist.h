@@ -23,6 +23,7 @@
 #pragma once
 
 #include <immintrin.h>
+//include <avx2intrin.h>
 #include <stdint.h>
 #include <memory>
 #include <limits>
@@ -32,7 +33,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
-//#include "hashtable.h"
+
 #define SHA_DIGEST_LENGTH 64
 
 namespace kn
@@ -48,7 +49,7 @@ namespace
 {
 constexpr auto MAX_SKIP = 8;
 static const auto TOP_LANE_BLOCK = sysconf(_SC_LEVEL1_DCACHE_LINESIZE) / sizeof(KeyType);
-constexpr auto SIMD_SEGMENTS = 8;
+constexpr auto SIMD_SEGMENTS = 256 / (sizeof(KeyType) * 8);
 }
 
 
@@ -91,6 +92,16 @@ struct DataNodes
 {
     DataNode* start_ {nullptr};
     DataNode* end_ {nullptr};
+    friend inline std::ostream& operator << (std::ostream& os, DataNodes& datas)
+    {
+        if (datas.start_) os << "start=" << *(datas.start_) << "|";
+        else os << "start=nullptr|";
+
+        if (datas.end_) os << "end=" << *(datas.end_);
+        else os << "start=nullptr";
+
+        return os;
+    }
 };
 
 class ProxyNode
@@ -514,9 +525,8 @@ public:
             p.second = lanes_[0].InsertIntoProxy(new_node);
             if (!p.second) return nullptr;
         }
-	//add the info for hash table. Insert the element into hash table
-//	inserthash(table, p.first, p.second);
-
+        //add the info for hash table. Insert the element into hash table
+        //	inserthash(table, p.first, p.second);
 
         ++total_elements_;
 
@@ -532,14 +542,14 @@ public:
     inline auto Find(const KeyType& key)
     {
         //cur_pos is abs idx
-    //        std::cout << sizeof(key) << std::endl;
-    /*
-    uint32_t *data64;
-    uint32_t total4;
-    data64 = (uint32_t *) &key;
-    total4 = _mm_crc32_u32 (total4, *data64);
+        //        std::cout << sizeof(key) << std::endl;
+        /*
+          uint32_t *data64;
+          uint32_t total4;
+          data64 = (uint32_t *) &key;
+          total4 = _mm_crc32_u32 (total4, *data64);
         */
-	auto cur_pos = lanes_[max_level_ - 1].BinarySearch(key);
+        auto cur_pos = lanes_[max_level_ - 1].BinarySearch(key);
         auto r_pos = GetProxyLaneRelPos(cur_pos, key);
         return lanes_[0].SearchProxyLane(r_pos, key);
     }
@@ -549,36 +559,29 @@ public:
         DataNodes ret;
 
         auto cur_pos = lanes_[max_level_ - 1].BinarySearch(start);
-        auto r_pos = GetProxyLaneRelPos(cur_pos, start);
+        int r_pos = GetProxyLaneRelPos(cur_pos, start);
         ret.start_ = lanes_[0].SearchProxyLaneGt(r_pos, start);
 
-        //__m256 avx_sreg = _mm256_castsi256_ps(_mm256_set1_epi32(end));
+        __m256i avx_sreg2 = _mm256_set1_epi64x(end);
 
-        ////r_pos = cur_pos - lanes_[0].start_;
-                     //uint32_t elements_in_lane = lanes_[0].elements_ - SIMD_SEGMENTS;
-        //while (r_pos < elements_in_lane)
-        //{
-        //    __m256 avx_creg = _mm256_castsi256_ps(
-        //        _mm256_loadu_si256((__m256i const*) &(lanes_[0].keys_[r_pos])));
-        //    __m256 res = _mm256_cmp_ps(avx_sreg, avx_creg, 30);
-        //    uint32_t bitmask = _mm256_movemask_ps(res);
-        //    if (bitmask < 0xff) break;
-        //    cur_pos += SIMD_SEGMENTS; r_pos += SIMD_SEGMENTS;
-        //    //ret.count_ += (SIMD_SEGMENTS * skip_);
-                     //}
+        int32_t elements_in_lane = lanes_[0].elements_;
+        while (r_pos < elements_in_lane)
+        {
+            __m256i avx_creg2 = _mm256_loadu_si256((__m256i const*) (lanes_[0].keys_[r_pos]));
+            __m256i res = _mm256_cmpgt_epi64(avx_creg2, avx_sreg2);
+            uint32_t bitmask = _mm256_movemask_epi8(res);
+            if (bitmask >= 0xFF) break;
+            cur_pos += SIMD_SEGMENTS; r_pos += SIMD_SEGMENTS;
+        }
 
-        cur_pos = lanes_[max_level_ - 1].BinarySearch(end);
-        r_pos = GetProxyLaneRelPos(cur_pos, end);
+        --r_pos;
+        auto& lane = lanes_[0];
+        while (r_pos < elements_in_lane - 1 && end > *(lane.keys_[r_pos]) &&  end >= *(lane.keys_[r_pos + 1]))
+        {
+            ++r_pos;
+        }
+
         ret.end_ = lanes_[0].SearchProxyLaneLt(r_pos, end);
-
-        //elements_in_lane += SIMD_SEGMENTS;
-        //auto& lane = lanes_[0];
-        //while (r_pos < elements_in_lane - 1 && end > lane.keys_[r_pos] &&  end >= lane.keys_[r_pos + 1])
-        //{
-        //    ++r_pos;
-        //}
-
-        //ret.end_ = lanes_[0].SearchProxyLaneLt(r_pos, end);
 
         return ret;
     }
@@ -674,47 +677,43 @@ protected:
     std::unique_ptr<KeyType[]> keys_ {nullptr};
     std::unique_ptr<Lane[]> lanes_{nullptr};
 };
+
 typedef struct list {
-    DataNode *head {nullptr};
-    DataNode *tail {nullptr};
+    DataNode* head_ {nullptr};
+    DataNode* tail_ {nullptr};
 } list;
 
 class HashTable
 {
     friend class SkipList;
 public:
-	HashTable(int size)
+	explicit HashTable(size_t size)
+            :size_(size)
+            ,table_((list **)malloc(sizeof (list) * size))
     {
-		size_=size;
-		table = (list **)malloc(sizeof (list) * size);
-		int i;
-		for (i = 0; i < size; i++) {
-			table[i] = listinit();
-		}
+		for (size_t i = 0; i != size_; ++i) table_[i] = listinit();
 	}
 
     // functions
-    list *listinit()
+    list* listinit()
     {
-        list *newlist;
-        newlist = (list*)malloc(sizeof (list));
-        DataNode *sentinel;
-        sentinel = (DataNode*)malloc(sizeof (DataNode));
+        list* newlist = (list*)malloc(sizeof (list));
+        DataNode* sentinel = (DataNode*)malloc(sizeof (DataNode));
 
-        sentinel->key_ = (kn::db::core::KeyType)'\0';
+        sentinel->key_ = 0;
         sentinel->data_ = nullptr;
         sentinel->hashnext_ = sentinel;
         sentinel->previous_ = sentinel;
 
-        newlist->head = sentinel;
-        newlist->tail = sentinel;
+        newlist->head_ = sentinel;
+        newlist->tail_ = sentinel;
 
         return newlist;
     }
 
     void destroylist(list *oldlist)
     {
-        DataNode *sentinel = oldlist->tail;
+        DataNode *sentinel = oldlist->tail_;
         //DataNode *iternode = oldlist->head;
     //    DataNode *next;
 
@@ -729,31 +728,34 @@ public:
         free(sentinel);
         free(oldlist);
     }
+
     void listinsert(list *insertlist, DataNode *toinsert)
-    { // inserts a new item at the beginning
-        toinsert->hashnext_ = insertlist->head;
-        toinsert->previous_ = insertlist->tail;
-        insertlist->head = toinsert;
+    {
+        // inserts a new item at the beginning
+        toinsert->hashnext_ = insertlist->head_;
+        toinsert->previous_ = insertlist->tail_;
+        insertlist->head_ = toinsert;
     }
 
     void listremove(list *curlist, DataNode *toremove)
-    { // remove a given node (use listsearch to find it)
-    //Leave the free operation to the skiplist
-        if (curlist->head == toremove) {
-            curlist->head = toremove->hashnext_;
-            curlist->head->previous_ = toremove->previous_;
-    //        free(toremove);
+    {
+        // remove a given node (use listsearch to find it)
+        //Leave the free operation to the skiplist
+        if (curlist->head_ == toremove) {
+            curlist->head_ = toremove->hashnext_;
+            curlist->head_->previous_ = toremove->previous_;
+            //        free(toremove);
         } else {
             toremove->next_->previous_ = toremove->previous_;
             toremove->previous_->hashnext_ = toremove->hashnext_;
-      //      free(toremove);
+            //      free(toremove);
         }
     }
-    DataNode *listkeysearch(list *tosearch, const KeyType& key)
+    DataNode* listkeysearch(list *tosearch, const KeyType& key)
     {
-        DataNode *iternode = tosearch->head;
+        DataNode* iternode = tosearch->head_;
     //int i;
-        while (iternode != tosearch->tail) {
+        while (iternode != tosearch->tail_) {
     //	i++;
             if (iternode->key_== key) {
     //	std::cout<<"iter:"<<i<<std::endl;
@@ -762,54 +764,56 @@ public:
                 iternode = iternode->hashnext_;
             }
         }
-        return tosearch->tail;
+        return tosearch->tail_;
     }
 
-
-    	void Insert(DataNode *new_node)
-    	{
+    void Insert(DataNode *new_node)
+    {
         uint32_t index = hashindex(new_node->key_);
     //	std::cout<<"index:"<<index<<std::endl;
-        list *temp = table[index];
+        list *temp = table_[index];
     //	std::cout<<"list:"<<table[index]<<std::endl;
         listinsert(temp, new_node);
-    	}
+    }
+
     uint32_t hashindex(const KeyType& key)
     {
-        uint64_t *data64;
-        data64 = (uint64_t *) &key;
-        uint32_t total4;
-        total4 = 0;
+        uint64_t *data64 = (uint64_t *) &key;
+        uint32_t total4 = 0;
         total4 = _mm_crc32_u64 (total4, *data64++);
         return total4&(0xffffff);
     }
+
     DataNode *hashlookup( const KeyType& key)
-    { // find the value for key in hashtab
-        uint32_t index;
-        index = hashindex(key);
-        list *templist =table[index];
-            DataNode *tempnode = listkeysearch(templist, key);
-            return tempnode;
-        if (templist->head!=templist->tail){
-            DataNode *tempnode = listkeysearch(templist, key);
-            return tempnode;}
-        else {
-            return {nullptr};
-        }
+    {
+        // find the value for key in hashtab
+        uint32_t index = hashindex(key);
+        list* templist = table_[index];
+        return listkeysearch(templist, key);
+
+        //if (templist->head!=templist->tail){
+        //    DataNode *tempnode = listkeysearch(templist, key);
+        //    return tempnode;
+        //}
+        //else {
+        //    return {nullptr};
+        //}
     }
+
     void hashdel(const KeyType& toremove)
-    { // delete the key/value pair from the hashtable
+    {
+        // delete the key/value pair from the hashtable
         uint32_t index = hashindex(toremove);
-        list *templist = table[index];
-        if (templist->head!=templist->tail) {
+        list *templist = table_[index];
+        if (templist->head_!=templist->tail_) {
             DataNode *delnode = listkeysearch(templist, toremove);
             listremove(templist, delnode);
         }
     }
-protected:
-    	list **table;
-	uint32_t size_;
 
+protected:
+	size_t size_ {0};
+    list **table_ {nullptr};
 };
 
 class SkipList
@@ -819,8 +823,8 @@ public:
     SkipList(uint8_t max_level, uint8_t skip)
             :head_(&head_node_)
             ,lanes_(std::make_unique<Lanes>(max_level, skip))
-	    ,table_(1<<25)
-	    //,table_(std::numeric_limits<uint32_t>::max()/2)
+            ,table_(1<<25)
+             //,table_(std::numeric_limits<uint32_t>::max()/2)
     {
         tail_= head_;
     }
@@ -839,8 +843,8 @@ public:
         {
             tail_->next_ = ins;
             tail_ = ins;
-		//Add the hash table
-		table_.Insert(new_node);
+            //Add the hash table
+            table_.Insert(new_node);
             return ins;
         }
         return nullptr;
@@ -848,10 +852,10 @@ public:
 
     inline auto Find(const KeyType& key)
     {
-//	DataNode *A=table_.hashlookup(key);
-//	std::cout<<"key:"<<key<<"Data:"<<A->key_<<"node"<<A->data_<<std::endl;
-//	return table_.hashlookup(key);
-        return lanes_->Find(key);
+        //DataNode* A = table_.hashlookup(key);
+        // std::cout<<"key:"<<key<<"Data:"<<A->key_<<"node"<<A->data_<<std::endl;
+        return table_.hashlookup(key);
+        //return lanes_->Find(key);
     }
 
     inline auto Find(const KeyType& start, const KeyType& end)

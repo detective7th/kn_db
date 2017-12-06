@@ -1,4 +1,5 @@
 #include <sstream>
+#include <numeric>
 #include <boost/filesystem.hpp>
 #include <gflags/gflags.h>
 #include <folly/experimental/StringKeyedUnorderedMap.h>
@@ -14,6 +15,29 @@ int main(int argc, char* argv[])
 #ifdef VERSION
     version_str << VERSION;
 #endif
+    //__m256i avx_sreg2 = _mm256_set_epi64x(5, 0, 0, 0); //_mm256_setzero_si256();
+    //__m256i avx_creg2 = _mm256_set_epi64x(4, 3, 2, 1);
+    //__m256i res = _mm256_cmpgt_epi64(avx_sreg2, avx_creg2);
+    //uint32_t bitmask = _mm256_movemask_epi8(res);
+
+    //return 0;
+
+    //kn::db::core::SkipList sl(2, 2);
+
+    //size_t datas[32] = {0};
+    //std::iota(std::begin(datas), std::end(datas), 0);
+    //for (size_t i = 0; i != sizeof(datas)/sizeof(size_t); ++i)
+    //{
+    //    auto tmp = new kn::db::core::DataNode(datas + i, sizeof(size_t), i);
+    //    sl.Insert(tmp);
+    //}
+
+    //std::cout << sl << std::endl;
+
+    //auto ret = sl.Find(2, 15);
+    //std::cout << ret << std::endl;
+
+    //return 0;
 
     gflags::SetVersionString(version_str.str());
     gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -101,18 +125,5 @@ int main(int argc, char* argv[])
 
     auto table = base.GetSet("transactions")->GetTable("000002");
 
-    std::cout << "memory(MB):" << table->total_memory() / 1024 / 1024 << std::endl;
-    auto res = table->Find(85900655892627062);
-    std::cout << res << std::endl;
-
-    //for (auto key : orders_keys)
-    //{
-    //    auto data_node = table->Find(key);
-    //    assert(data_node);
-    //}
-
-    //auto nodes = table->Find(orders_keys[10], orders_keys[300]);
-    //assert(nodes.start_);
-    //assert(nodes.end_);
     return 0;
 }

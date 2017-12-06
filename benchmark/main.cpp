@@ -42,11 +42,11 @@ int main(int argc, char** argv)
         {
             namedot::set_search_bench_single(FLAGS_data_path + "/orders/000002");
         }
-        else if(std::string(argv[1]) == std::string("transaction"))
+        else if(FLAGS_test_type == std::string("transaction"))
         {
             ndt::set_search_bench_single(FLAGS_data_path + "/transactions/000002");
         }
-        else if(std::string(argv[1]) == std::string("timeshare"))
+        else if(FLAGS_test_type == std::string("timeshare"))
         {
             nts::set_search_bench_single(FLAGS_data_path + "/one_min/000002");
         }

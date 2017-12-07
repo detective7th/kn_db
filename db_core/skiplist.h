@@ -324,7 +324,11 @@ public:
         return ret;
     }
 
-    size_t total_memory() { return slot_num_ * skip_ * (sizeof(DataNode) - sizeof(size_t) - sizeof(void*)); }
+    size_t total_memory() 
+    { 
+        return slot_num_ * skip_ * (sizeof(DataNode) - sizeof(size_t) - sizeof(void*)) 
+        + (1 << 25) * sizeof(DataNode); 
+    }
 
 protected:
     uint32_t slot_num_{0};

@@ -18,8 +18,8 @@ using namespace folly;
 
 DEFINE_string(type, "sl", "test type");
 DEFINE_int32(max_level, 8, "max level in kn_db");
-DEFINE_int32(skip, 4, "max skip in kn_db");
-DEFINE_string(path, "/media/psf/Home/Documents/kn_db/kn_db/data", "data path");
+DEFINE_int32(skip, 6, "max skip in kn_db");
+DEFINE_string(path, "/media/psf/Home/Documents/kn_db/data", "data path");
 DEFINE_int32(multiple, 0, "rang test");
 void sleeptimes()
 {

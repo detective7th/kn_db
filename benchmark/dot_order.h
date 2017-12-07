@@ -326,7 +326,7 @@ void set_search_bench_single(std::string path,int mutiple = 0)
                     auto res = table->Find(iter);
                     if(!res)
                     {
-                        std::cout <<"nunllptr,key:"<< iter;
+                        //std::cout <<"nunllptr,key:"<< iter;
                     }
                 }
                 //folly::doNotOptimizeAway(base);
@@ -337,7 +337,7 @@ void set_search_bench_single(std::string path,int mutiple = 0)
     {
         auto table = base.GetSet("orders")->GetTable("000002").get(); 
         auto size = table->total_memory(); 
-        std::cout << "-----size -------" << size << std::endl;      
+        std::cout << "--orders---size -------" << size << std::endl;      
         auto search_key = rand_search_key(path);
         if(mutiple == 0)
         {

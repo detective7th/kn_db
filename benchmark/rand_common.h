@@ -11,8 +11,9 @@
 #include <algorithm>
 #include "db_core/data_base.h"
 #include "db_service/data_def.h"
-
+#include "db_core/data_base.h"
 const int kSearchCount = 1000000;
+const int kMinLimtCount = 10;
 std::vector<int64_t> rand_count()
 {
     std::vector<int64_t> vec;
@@ -20,11 +21,11 @@ std::vector<int64_t> rand_count()
     int base = 20171001;
     for(int i = 0; i < kSearchCount; i ++)
     {
+        
         vec.emplace_back(((int64_t)rand()%30 + base) << 32| ((int64_t)rand() % 10000000));
     }
     return vec;
 }
-
 std::vector<int64_t> rand_count_in_vec(const std::vector<int64_t>& data)
 {
     std::vector<int64_t> vec;
@@ -42,7 +43,26 @@ std::vector<int64_t> rand_count_in_vec(const std::vector<int64_t>& data)
     }
     return vec;
 }
-
+std::vector<std::pair<int64_t,int64_t>> rand_rang_count_in_vec(const std::vector<int64_t>& data, int mutiple = 1)
+{
+    std::vector<std::pair<int64_t,int64_t>> vec;
+    if(data.empty())
+    {
+        std::cout<< "data source is empty"<< std::endl;
+        return vec;
+    }
+    srand(time(0));
+    int first = 0, second = mutiple;
+    int max = mutiple;
+    for(int i = 0; i < max; i ++)
+    {
+        //first = rand() % data.size();
+        //second = rand() % (kMinLimtCount * mutiple) + 1;
+        first = 1;
+        vec.emplace_back(std::pair<int64_t,int64_t>(data.at(first), data.at(first) + second));
+    }
+    return vec;
+}
 std::map<uint32_t,uint32_t> rand_map_count()
 {
     srand(time(0));
@@ -55,7 +75,6 @@ std::map<uint32_t,uint32_t> rand_map_count()
     }
     return con;
 }
-
 std::vector<std::string> rand_date_17bit(const std::string& front)
 {
     std::vector<std::string> vec;
@@ -68,10 +87,7 @@ std::vector<std::string> rand_date_17bit(const std::string& front)
     }
     return vec;
 }
-
-template<typename T>
-void rand_bench_com(int iters, const folly::StringPiece& file_data
-                    , const std::function<bool(const folly::StringPiece& file_data, T& con)>& fun_insert)
+template<typename T> void rand_bench_com(int iters, const folly::StringPiece& file_data, const std::function<bool(const folly::StringPiece& file_data, T& con)>& fun_insert)
 {
     folly::BenchmarkSuspender braces;
     braces.dismissing([&] {
@@ -79,27 +95,25 @@ void rand_bench_com(int iters, const folly::StringPiece& file_data
           T test;
           if(!fun_insert(file_data, test))
           {
-              return;
+            return;
           }
           folly::doNotOptimizeAway(test);
         }
     });
 }
-
-template<typename T, typename P>
-void rand_search_bench_com(int iters,const T& dicts , const std::vector<P>& search_key
-                           , const std::function<bool(const T& dicts , const P& key)>& fun_search)
+template<typename T, typename P>void rand_search_bench_com(int iters,const T& dicts , const std::vector<P>& search_key, const std::function<bool(const T& dicts , const P& key)>& fun_search)
 {
     folly::BenchmarkSuspender braces;
     braces.dismissing([&] {
         while (iters--) {
             for(const auto& key : search_key)
             {
-                if (!fun_search(dicts, key))
-                {
-                    std::cerr << "Miss Key:" << key << std::endl;
-                }
-                folly::doNotOptimizeAway(dicts);
+                fun_search(dicts, key);
+            //   if(!fun_search(dicts, key))
+            //   {
+            //     //std::cout << "Not fount key:" << key << "\t";
+            //   }
+              folly::doNotOptimizeAway(dicts);   
             }
         }
     });
@@ -161,12 +175,10 @@ void release_skillist(const std::string path, kn::db::core::DataBase& base, uint
         }
     }
 }
-
 bool fun_vector_binary_search(const std::vector<int64_t>& con, const int64_t& search_key)
 {
     return std::binary_search (con.begin(), con.end(), search_key);
 }
-
 template<typename T> bool fun_map_search(const T& con, const int64_t& search_key)
 {
     auto res = con.find(search_key);
@@ -176,7 +188,6 @@ template<typename T> bool fun_map_search(const T& con, const int64_t& search_key
     // }
     return true;
 }
-
 template<typename T, typename K> bool fun_vector_search(const T& con, const K& search_key)
 {
     auto res = std::find(con.begin(), con.end(), search_key);
@@ -186,13 +197,53 @@ template<typename T, typename K> bool fun_vector_search(const T& con, const K& s
     // }
     return true;
 }
-
 template<typename T,typename K> bool fun_map_search(const T& con, const K& search_key)
 {
     auto res = con.find(search_key);
     if(res != con.end())
     {
         //std::cout <<" found";
+    }
+    return true;
+}
+void rand_bench_skiplist_range_search(int iters, kn::db::core::Table* table,const std::vector<std::pair<int64_t, int64_t>>& search_key)
+{
+    folly::BenchmarkSuspender braces;
+     braces.dismissing([&] {
+         while (iters--) {
+             for(const auto& iter : search_key)
+             {
+                 auto res = table->Find(iter.first, iter.second);
+                 if(!res.start_)
+                 {
+                     std::cout <<"start nunllptr";
+                 }
+                if(!res.end_)
+                {
+                std::cout <<"end nunllptr";
+                } 
+             }
+             //folly::doNotOptimizeAway(base); 
+         }
+     });
+}
+template<typename T> bool fun_map_range_search(const T& con,const std::pair<int64_t, int64_t>& key)
+{
+    for(int64_t i = key.first; i < key.second; i++)
+    {
+        auto res = con.find(i);
+        if(res != con.end())
+        {
+            //std::cout <<" found";
+        }
+    }
+    return true;
+}
+bool fun_vector_binary_range_search(const std::vector<int64_t>& con, const std::pair<int64_t, int64_t>& key)
+{
+    for(int64_t i = key.first; i < key.second; i++)
+    {
+        std::binary_search (con.begin(), con.end(), i);
     }
     return true;
 }

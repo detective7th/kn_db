@@ -574,7 +574,7 @@ public:
             cur_pos += SIMD_SEGMENTS; r_pos += SIMD_SEGMENTS;
         }
 
-        --r_pos;
+        if (0 < r_pos) --r_pos;
         auto& lane = lanes_[0];
         while (r_pos < elements_in_lane - 1 && end > *(lane.keys_[r_pos]) &&  end >= *(lane.keys_[r_pos + 1]))
         {

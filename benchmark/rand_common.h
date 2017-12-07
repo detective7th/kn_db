@@ -53,12 +53,12 @@ std::vector<std::pair<int64_t,int64_t>> rand_rang_count_in_vec(const std::vector
     }
     srand(time(0));
     int first = 0, second = mutiple;
-    int max = mutiple;
+    int max = kSearchCount;
     for(int i = 0; i < max; i ++)
     {
-        //first = rand() % data.size();
+        first = rand() % data.size();
         //second = rand() % (kMinLimtCount * mutiple) + 1;
-        first = 1;
+        //first = 1;
         vec.emplace_back(std::pair<int64_t,int64_t>(data.at(first), data.at(first) + second));
     }
     return vec;
@@ -182,27 +182,27 @@ bool fun_vector_binary_search(const std::vector<int64_t>& con, const int64_t& se
 template<typename T> bool fun_map_search(const T& con, const int64_t& search_key)
 {
     auto res = con.find(search_key);
-    // if(res == con.end())
-    // {
-    //     std::cout <<"nunllptr,key:"<< search_key;
-    // }
+    if(res == con.end())
+    {
+        std::cout <<"nunllptr,key:"<< search_key;
+    }
     return true;
 }
 template<typename T, typename K> bool fun_vector_search(const T& con, const K& search_key)
 {
     auto res = std::find(con.begin(), con.end(), search_key);
-    // if(res != con.end())
-    // {
-    //     std::cout <<"nunllptr,key:"<< search_key;
-    // }
+    if(res == con.end())
+    {
+        std::cout <<"nunllptr,key:"<< search_key;
+    }
     return true;
 }
 template<typename T,typename K> bool fun_map_search(const T& con, const K& search_key)
 {
     auto res = con.find(search_key);
-    if(res != con.end())
+    if(res == con.end())
     {
-        //std::cout <<" found";
+        std::cout <<"nunllptr,key:"<< search_key;
     }
     return true;
 }
@@ -220,7 +220,7 @@ void rand_bench_skiplist_range_search(int iters, kn::db::core::Table* table,cons
                  }
                 if(!res.end_)
                 {
-                std::cout <<"end nunllptr";
+                    std::cout <<"end nunllptr";
                 } 
              }
              //folly::doNotOptimizeAway(base); 
@@ -232,9 +232,9 @@ template<typename T> bool fun_map_range_search(const T& con,const std::pair<int6
     for(int64_t i = key.first; i < key.second; i++)
     {
         auto res = con.find(i);
-        if(res != con.end())
+        if(res == con.end())
         {
-            //std::cout <<" found";
+            std::cout <<"nunllptr,key:"<< search_key;
         }
     }
     return true;

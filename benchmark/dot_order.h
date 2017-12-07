@@ -323,11 +323,11 @@ void set_search_bench_single(std::string path,int mutiple = 0)
             while (iters--) {
                 for(const auto& iter : search_key)
                 {
-                    table->Find(iter);
-                    // if(!res)
-                    // {
-                    //     std::cout <<"nunllptr,key:"<< iter;
-                    // }
+                    auto res = table->Find(iter);
+                    if(!res)
+                    {
+                        std::cout <<"nunllptr,key:"<< iter;
+                    }
                 }
                 //folly::doNotOptimizeAway(base);
             }

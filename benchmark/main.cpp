@@ -19,8 +19,8 @@ using namespace folly;
 DEFINE_string(type, "sl", "test type");
 DEFINE_int32(max_level, 8, "max level in kn_db");
 DEFINE_int32(skip, 4, "max skip in kn_db");
-DEFINE_string(path, "/home/hzs/SSE/kn_db/data/", "data path");
-DEFINE_int32(mutiple, 0, "rang test");
+DEFINE_string(path, "/media/psf/Home/Documents/kn_db/kn_db/data", "data path");
+DEFINE_int32(multiple, 0, "rang test");
 void sleeptimes()
 {
   // int times = 10;
@@ -64,15 +64,15 @@ int main(int argc, char** argv)
     {
       if ("orders" == iter.first)
       {
-        namedot::set_search_skiplist(iter.second, base, FLAGS_mutiple);
+        namedot::set_search_skiplist(iter.second, base, FLAGS_multiple);
       }
       else if ("transactions" == iter.first)
       {
-        ndt::set_search_skiplist(iter.second, base, FLAGS_mutiple);
+        ndt::set_search_skiplist(iter.second, base, FLAGS_multiple);
       }
       else if ("one_min" == iter.first)
       {
-        nts::set_search_skiplist(iter.second, base, FLAGS_mutiple);
+        nts::set_search_skiplist(iter.second, base, FLAGS_multiple);
       }
     }
     sleeptimes();
@@ -82,15 +82,15 @@ int main(int argc, char** argv)
   }
   else if(FLAGS_type  == std::string("orders"))
   {
-    namedot::set_search_bench_single(tmp_path, FLAGS_mutiple);
+    namedot::set_search_bench_single(tmp_path, FLAGS_multiple);
   }
   else if(FLAGS_type == std::string("transactions"))
   {
-    ndt::set_search_bench_single(tmp_path, FLAGS_mutiple);
+    ndt::set_search_bench_single(tmp_path, FLAGS_multiple);
   }
   else if(FLAGS_type == std::string("one_min"))
   {
-    nts::set_search_bench_single(tmp_path, FLAGS_mutiple);
+    nts::set_search_bench_single(tmp_path, FLAGS_multiple);
   }
   sleeptimes();
   runBenchmarks();

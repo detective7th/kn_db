@@ -320,11 +320,11 @@ void rand_bench_skiplist_search(int iters, Table* table,const std::vector<int64_
         while (iters--) {
             for(const auto& iter : search_key)
             {
-                table->Find(iter);
-                // if(!res)
-                // {
-                //     std::cout <<"nunllptr,key:"<< iter;
-                // }
+                auto res = table->Find(iter);
+                if(!res)
+                {
+                    std::cout <<"nunllptr,key:"<< iter;
+                }
             }
             //folly::doNotOptimizeAway(base);
         }

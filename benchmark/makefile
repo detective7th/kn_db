@@ -3,7 +3,7 @@ PRGM=bench_test
 
 #VPATH =../../Common/proto
 
-#wildcard : À©Õ¹Í¨Åä·û ¡înotdir £ºÈ¥³ýÂ·¾¶ patsubst £ºÌæ»»Í¨Åä·û
+#wildcard : ï¿½ï¿½Õ¹Í¨ï¿½ï¿½ï¿½ ï¿½ï¿½notdir ï¿½ï¿½È¥ï¿½ï¿½Â·ï¿½ï¿½ patsubst ï¿½ï¿½ï¿½æ»»Í¨ï¿½ï¿½ï¿½
 CPP_SRC=$(wildcard ./*.cpp)
 CPP_OBJ=$(patsubst %.cpp, %.o, $(notdir ${CPP_SRC}))
 
@@ -17,7 +17,7 @@ OBJS=$(CPP_OBJ) #$(PB_OBJ)
 
 ######################debug release#########################
 #debug
-CCFLAGS=-g -O3 -msse4.2
+CCFLAGS=-g -O3  -mavx2
 LIBINC=-L/usr/lib/boost/ -L/usr/local/lib/
 BINDIR=./debug
 
@@ -36,7 +36,7 @@ LIBS=-lpthread  -lfolly -lglog -lgflags -lfollybenchmark -lboost_system -lboost_
 #INC=-I./ -I../../ -I../../Common/ground/ground_1_0_1 -I../../Common/proto -I../../Common/include -I$(HOME)/include
 #INC = -I../../Common/boostex -I../../Common/include -I../../comm/linux-pb  -I../../comm/include
 INC=-I. -I../
-#±àÒërelease°æ±¾Ö´ÐÐÃüÁîmake R=-O2
+#ï¿½ï¿½ï¿½ï¿½releaseï¿½æ±¾Ö´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½make R=-O2
 #RELEASEFLAG=$R
 #ifndef R
 #CCFLAGS=-g

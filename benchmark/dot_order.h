@@ -147,7 +147,6 @@ void set_search_bench_single(std::string path,int mutiple = 0)
     std::vector<int64_t> test;
     std::list<int64_t> testlist;
     std::map<int64_t, std::shared_ptr<DataNode>> test_map;
-    std::unordered_map<int64_t, std::shared_ptr<DataNode>> test_hash_map;
     guoxiao::skiplist::SkipList<int64_t, std::shared_ptr<DataNode>> test_skip_list;
     static trees::BTree<int64_t, std::shared_ptr<DataNode>> test_btree(64);
     static art::radix_map<int64_t, std::shared_ptr<DataNode>> test_art;
@@ -166,7 +165,6 @@ void set_search_bench_single(std::string path,int mutiple = 0)
         test.emplace_back(no);
         testlist.emplace_back(no);
         test_map.emplace(no, ptr);
-        test_hash_map.emplace(no, ptr);
         test_skip_list.emplace(no, ptr);
         test_btree.insert(no, ptr);
         test_bplustree.insert(no, ptr);
@@ -185,13 +183,6 @@ void set_search_bench_single(std::string path,int mutiple = 0)
                 rand_search_bench_com<std::map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_map, search_key, fun_map_search<std::map<int64_t,std::shared_ptr<DataNode>>, int64_t>);
                 return iters;
             });    
-        addBenchmark(
-            test_name.c_str(),
-            "unordered_map",
-            [=](int iters) {
-                rand_search_bench_com<std::unordered_map<int64_t, std::shared_ptr<DataNode>>, int64_t>(iters ,test_hash_map, search_key, fun_map_search<std::unordered_map<int64_t, std::shared_ptr<DataNode>>, int64_t>);
-                return iters;
-            });
         addBenchmark(
             test_name.c_str(),
             "vector_binary",
@@ -239,14 +230,7 @@ void set_search_bench_single(std::string path,int mutiple = 0)
             [=](int iters) {
                 rand_search_bench_com<std::map<int64_t, std::shared_ptr<DataNode>>, std::pair<int64_t,int64_t>>(iters ,test_map, search_range, fun_map_range_search<std::map<int64_t, std::shared_ptr<DataNode>>>);
                 return iters;
-            });    
-        addBenchmark(
-            test_name.c_str(),
-            "unordered_map",
-            [=](int iters) {
-                rand_search_bench_com<std::unordered_map<int64_t, std::shared_ptr<DataNode>>, std::pair<int64_t,int64_t>>(iters ,test_hash_map, search_range, fun_map_range_search<std::unordered_map<int64_t, std::shared_ptr<DataNode>>>);
-                return iters;
-            });
+            }); 
             addBenchmark(
                 test_name.c_str(),
                 "vector_binary",

@@ -52,8 +52,8 @@ std::vector<std::pair<int64_t,int64_t>> rand_rang_count_in_vec(const std::vector
         return vec;
     }
     srand(time(0));
-    int first = 0, second = mutiple;
-    int max = kSearchCount / mutiple;
+    int first = 0, second = mutiple * kMinLimtCount;
+    int max = kSearchCount / (mutiple * kMinLimtCount);
     for(int i = 0; i < max; i ++)
     {
         first = rand() % data.size();

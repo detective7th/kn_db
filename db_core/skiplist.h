@@ -320,7 +320,11 @@ public:
         return ret;
     }
 
-    size_t total_memory() { return slot_num_ * skip_ * (sizeof(DataNode) - sizeof(size_t) - sizeof(void*)); }
+    size_t total_memory() 
+    { 
+        return slot_num_ * skip_ * (sizeof(DataNode) - sizeof(size_t) - sizeof(void*)) 
+        + (1 << 25) * sizeof(DataNode); 
+    }
 
 protected:
     uint32_t slot_num_{0};
@@ -571,7 +575,7 @@ public:
             cur_pos += SIMD_SEGMENTS; r_pos += SIMD_SEGMENTS;
         }
 
-        --r_pos;
+        if (0 < r_pos) --r_pos;
         auto& lane = lanes_[0];
         while (r_pos < elements_in_lane - 1 && end > *(lane.keys_[r_pos]) &&  end >= *(lane.keys_[r_pos + 1]))
         {

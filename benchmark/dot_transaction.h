@@ -148,7 +148,7 @@ void set_search_bench_single(const std::string& path,int mutiple = 0)
          testlist.emplace_back(no);
          test_map.emplace(no, ptr);
          test_hash_map.emplace(no, ptr);
-         //test_skip_list_trans.emplace(no, ptr);
+         test_skip_list_trans.emplace(no, ptr);
          test_btree_trans.insert(no, ptr);
          test_bplustree.insert(no, ptr);
          test_art_trans.emplace(no, ptr);
@@ -314,11 +314,11 @@ void set_search_bench_single(const std::string& path,int mutiple = 0)
             while (iters--) {
                 for(const auto& iter : search_key)
                 {
-                    table->Find(iter);
-                    // if(!res)
-                    // {
-                    //     std::cout <<"nunllptr,key:"<< iter;
-                    // }
+                    auto res = table->Find(iter);
+                    if(!res)
+                    {
+                        //std::cout <<"nunllptr,key:"<< iter;
+                    }
                 }
                 //folly::doNotOptimizeAway(base);
             }
@@ -332,6 +332,8 @@ void set_search_bench_single(const std::string& path,int mutiple = 0)
         {
             search_key = rand_count_in_vec(search_key);
             std::cout << "tranaction_test ,total size : "<< search_key.size() << std::endl;
+            auto size = table->total_memory(); 
+            std::cout << "--orders---size -------" << size << std::endl;      
             addBenchmark(
                 "transaction_test",
                 "kn_db",

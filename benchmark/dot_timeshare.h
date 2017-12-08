@@ -320,11 +320,11 @@ void rand_bench_skiplist_search(int iters, Table* table,const std::vector<int64_
         while (iters--) {
             for(const auto& iter : search_key)
             {
-                table->Find(iter);
-                // if(!res)
-                // {
-                //     std::cout <<"nunllptr,key:"<< iter;
-                // }
+                auto res = table->Find(iter);
+                if(!res)
+                {
+                    //std::cout <<"nunllptr,key:"<< iter;
+                }
             }
             //folly::doNotOptimizeAway(base);
         }
@@ -339,7 +339,8 @@ void set_search_skiplist(const std::string& path, kn::db::core::DataBase& base,i
     {
         search_key = rand_count_in_vec(search_key);
         std::cout << "timeshare_test ,total size : "<< search_key.size() << std::endl;
-        std::cout<< "size:" << search_key.size() << std::endl;
+        auto size = table->total_memory(); 
+        std::cout << "--orders---size -------" << size << std::endl;      
         addBenchmark(
             "timeshare_test",
             "kn_db",

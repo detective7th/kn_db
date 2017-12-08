@@ -160,11 +160,7 @@ public:
     DataNode* Add(DataNode*& node)
     {
         decltype(skip_) pos_add = 0;
-        if (node->key_ == 85900655892627062)
-        {
-            int i = 0;
-            ++i;
-        }
+
         for (;pos_add != skip_; ++pos_add)
         {
             if (!nodes_[pos_add]) break;
@@ -562,15 +558,16 @@ public:
         int r_pos = GetProxyLaneRelPos(cur_pos, start);
         ret.start_ = lanes_[0].SearchProxyLaneGt(r_pos, start);
 
-        __m256i avx_sreg2 = _mm256_set1_epi64x(end);
+        __m256d avx_sreg2 = _mm256_castsi256_pd(_mm256_set1_epi64x(end));
 
         int32_t elements_in_lane = lanes_[0].elements_;
         while (r_pos < elements_in_lane)
         {
-            __m256i avx_creg2 = _mm256_loadu_si256((__m256i const*) (lanes_[0].keys_[r_pos]));
-            __m256i res = _mm256_cmpgt_epi64(avx_creg2, avx_sreg2);
-            uint32_t bitmask = _mm256_movemask_epi8(res);
-            if (bitmask >= 0xFF) break;
+            __m256i tmp = _mm256_loadu_si256((__m256i const*) (lanes_[0].keys_[r_pos]));
+            __m256d avx_creg2 = _mm256_castsi256_pd(_mm256_loadu_si256((__m256i const*) (lanes_[0].keys_[r_pos])));
+            __m256d res = _mm256_cmp_pd(avx_sreg2, avx_creg2, _CMP_GE_OQ);
+            int32_t bitmask = _mm256_movemask_pd(res);
+            if (bitmask >= 1) break;
             cur_pos += SIMD_SEGMENTS; r_pos += SIMD_SEGMENTS;
         }
 

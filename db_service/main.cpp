@@ -15,11 +15,18 @@ int main(int argc, char* argv[])
 #ifdef VERSION
     version_str << VERSION;
 #endif
+    //__m256i avx_sreg2 = _mm256_set1_epi64x(8);
+    //__m256d avx_sreg3 = _mm256_castsi256_pd(avx_sreg2);
+
     //__m256i avx_sreg2 = _mm256_set_epi64x(5, 0, 0, 0); //_mm256_setzero_si256();
-    //__m256i avx_creg2 = _mm256_set_epi64x(4, 3, 2, 1);
+    //__m256i avx_creg2 = _mm256_set_epi64x(7, 8, 9, 10);
     //__m256i res = _mm256_cmpgt_epi64(avx_sreg2, avx_creg2);
     //uint32_t bitmask = _mm256_movemask_epi8(res);
 
+    //__m256i avx_creg2 = _mm256_set_epi64x(11, 10, 9, 8);
+    //__m256d avx_creg3 = _mm256_castsi256_pd(avx_creg2);
+    //__m256d res = _mm256_cmp_pd(avx_sreg3, avx_creg3, _CMP_GT_OQ);
+    //int bitmask = _mm256_movemask_pd(res);
     //return 0;
 
     //kn::db::core::SkipList sl(2, 2);
@@ -34,7 +41,7 @@ int main(int argc, char* argv[])
 
     //std::cout << sl << std::endl;
 
-    //auto ret = sl.Find(2, 15);
+    //auto ret = sl.Find(8, 13);
     //std::cout << ret << std::endl;
 
     //return 0;
